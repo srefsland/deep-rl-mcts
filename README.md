@@ -1,1 +1,1 @@
-# IT3105---AI-Programming
+# it3105-artificial-intelligence-programming
