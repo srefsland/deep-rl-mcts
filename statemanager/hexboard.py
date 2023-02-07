@@ -6,7 +6,7 @@ from boardcell import BoardCell
 # Player 2 (black): left to right
 
 
-class Board:
+class HexBoard:
     def __init__(self, board_size=0, board=None):
         if board is None:
             self.board = self.init_board(board_size)
