@@ -54,7 +54,7 @@ class Board:
 
     def convert_to_diamond_shape(self):
         diamond_array = []
-        for i in range(1 - self.board_size, self.board_size):
+        for i in range(-self.board_size + 1, self.board_size):
             diamond_array.append(np.diagonal(
                 np.flipud(self.board), i).tolist())
 

@@ -130,6 +130,18 @@ class BoardTest(unittest.TestCase):
         self.assertEqual(new_board[14].get_position(), (3, 2))
         self.assertEqual(new_board[15].get_position(), (3, 3))
 
+    def test_move_making(self):
+        board = Board(4)
+
+        board.make_move((0, 0), (0, 1))
+        self.assertEqual(board.board[0][0].get_owner(), (0, 1))
+
+        with self.assertRaises(Exception):
+            board.make_move((0, 0), (0, 1))
+
+        board.make_move((0, 1), (1, 0))
+        self.assertEqual(board.board[0][1].get_owner(), (1, 0))
+
 
 if __name__ == '__main__':
     unittest.main()
