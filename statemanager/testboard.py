@@ -1,10 +1,10 @@
-from board import Board
+from hexboard import HexBoard
 import unittest
 
 
 class BoardTest(unittest.TestCase):
     def test_win_state_player1(self):
-        setup_board_win_state_check = Board(4)
+        setup_board_win_state_check = HexBoard(4)
 
         setup_board_win_state_check.board[0][0].set_owner((1, 0))
         setup_board_win_state_check.board[1][0].set_owner((1, 0))
@@ -18,7 +18,7 @@ class BoardTest(unittest.TestCase):
 
         self.assertFalse(is_win)
 
-        setup_board_win_state_check = Board(4)
+        setup_board_win_state_check = HexBoard(4)
 
         setup_board_win_state_check.board[0][0].set_owner((1, 0))
         setup_board_win_state_check.board[1][0].set_owner((1, 0))
@@ -32,7 +32,7 @@ class BoardTest(unittest.TestCase):
 
         self.assertFalse(is_win)
 
-        setup_board_win_state_check = Board(4)
+        setup_board_win_state_check = HexBoard(4)
 
         setup_board_win_state_check.board[0][0].set_owner((1, 0))
         setup_board_win_state_check.board[1][0].set_owner((1, 0))
@@ -48,7 +48,7 @@ class BoardTest(unittest.TestCase):
         self.assertTrue(is_win)
 
     def test_win_state_player2(self):
-        setup_board_win_state_check = Board(4)
+        setup_board_win_state_check = HexBoard(4)
 
         setup_board_win_state_check.board[0][0].set_owner((0, 1))
         setup_board_win_state_check.board[1][0].set_owner((0, 1))
@@ -63,7 +63,7 @@ class BoardTest(unittest.TestCase):
 
         self.assertTrue(is_win)
 
-        setup_board_win_state_check = Board(4)
+        setup_board_win_state_check = HexBoard(4)
 
         setup_board_win_state_check.board[0][0].set_owner((0, 1))
         setup_board_win_state_check.board[1][0].set_owner((0, 1))
@@ -79,7 +79,7 @@ class BoardTest(unittest.TestCase):
         self.assertFalse(is_win)
 
     def test_conversion_to_diamond_shape(self):
-        setup_board_win_state_check = Board(4)
+        setup_board_win_state_check = HexBoard(4)
 
         diamond_array = setup_board_win_state_check.convert_to_diamond_shape()
 
@@ -107,7 +107,7 @@ class BoardTest(unittest.TestCase):
         self.assertEqual(diamond_array[6][0].get_position(), (3, 3))
 
     def test_conversion_to_1D_array(self):
-        board = Board(4)
+        board = HexBoard(4)
 
         new_board = board.convert_to_1D_array()
 
@@ -131,7 +131,7 @@ class BoardTest(unittest.TestCase):
         self.assertEqual(new_board[15].get_position(), (3, 3))
 
     def test_move_making(self):
-        board = Board(4)
+        board = HexBoard(4)
 
         board.make_move((0, 0), (0, 1))
         self.assertEqual(board.board[0][0].get_owner(), (0, 1))
