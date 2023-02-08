@@ -33,7 +33,7 @@ class HexBoard(StateManager):
 
         for row in self.board:
             for node in row:
-                if node.get_owner() == (0, 0):
+                if self.is_move_legal(node.get_position()):
                     moves.append(node.get_position())
 
         return moves
@@ -78,7 +78,7 @@ class HexBoard(StateManager):
                     neighbors.append(self.board[neighbor[0]][neighbor[1]])
 
         return neighbors
-    
+
     def generate_child_states(self, player):
         child_states = []
         moves = self.get_moves_legal()
@@ -89,7 +89,7 @@ class HexBoard(StateManager):
             child_states.append(child_board)
 
         return child_states
-    
+
     def check_winning_state(self, player):
         if player == (1, 0):
             return self.check_winning_state_player1()
