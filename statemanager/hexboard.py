@@ -1,12 +1,13 @@
 import numpy as np
 from boardcell import BoardCell
+from statemanager import StateManager
 
 # Notes (for square board representation)
 # Player 1 (red): top to bottom
 # Player 2 (black): left to right
 
 
-class HexBoard:
+class HexBoard(StateManager):
     def __init__(self, board_size=0, board=None):
         if board is None:
             self.board = self.init_board(board_size)
@@ -77,6 +78,25 @@ class HexBoard:
                     neighbors.append(self.board[neighbor[0]][neighbor[1]])
 
         return neighbors
+    
+    def generate_child_states(self, player):
+        child_states = []
+        moves = self.get_moves_legal()
+
+        for move in moves:
+            child_board = self.board.copy()
+            child_board[move[0]][move[1]].set_owner(player)
+            child_states.append(child_board)
+
+        return child_states
+    
+    def check_winning_state(self, player):
+        if player == (1, 0):
+            return self.check_winning_state_player1()
+        elif player == (0, 1):
+            return self.check_winning_state_player2()
+        else:
+            raise Exception("Invalid player")
 
     # Player 1 (red) is top to bottom
     def check_winning_state_player1(self):
