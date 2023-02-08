@@ -44,7 +44,7 @@ class HexBoard:
             return False
 
     def make_move(self, move, player):
-        if self.is_move_legal(move):
+        if self.is_within_bounds(move[0], move[1]) and self.is_move_legal(move):
             self.board[move[0]][move[1]].set_owner(player)
         else:
             raise Exception("Illegal move")
@@ -60,6 +60,9 @@ class HexBoard:
 
         return diamond_array
 
+    def is_within_bounds(self, row, col):
+        return row >= 0 and row < self.board_size and col >= 0 and col < self.board_size
+
     def expand_neighbors(self, node, player):
         row, col = node.get_position()
 
@@ -69,7 +72,7 @@ class HexBoard:
         neighbors = []
 
         for neighbor in neighbors_coords:
-            if neighbor[0] >= 0 and neighbor[0] < self.board_size and neighbor[1] >= 0 and neighbor[1] < self.board_size:
+            if self.is_within_bounds(neighbor[0], neighbor[1]):
                 if (self.board[neighbor[0]][neighbor[1]].get_owner() == player):
                     neighbors.append(self.board[neighbor[0]][neighbor[1]])
 
