@@ -1,4 +1,4 @@
-# AlphaGo Knock-Off project
+# AlphaGo Knock-Off Project
 
-![Screenshot](./.github/hex.gif)
+<img src="https://github.com/simenrefsland/it3105-artificial-intelligence-programming/blob/master/.github/hex.gif" width=500px>
 
