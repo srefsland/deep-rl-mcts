@@ -44,6 +44,14 @@ class HexBoard(StateManager):
         else:
             return False
 
+    def make_random_move(self, player):
+        moves = self.get_moves_legal()
+
+        if len(moves) == 0:
+            return
+
+        self.make_move(moves[np.random.randint(0, len(moves))], player)
+
     def make_move(self, move, player):
         if self.is_within_bounds(move[0], move[1]) and self.is_move_legal(move):
             self.board[move[0]][move[1]].set_owner(player)
@@ -90,13 +98,13 @@ class HexBoard(StateManager):
 
         return child_states
 
-    def check_winning_state(self, player):
+    def check_winning_state(self, player=(0, 0)):
         if player == (1, 0):
             return self.check_winning_state_player1()
         elif player == (0, 1):
             return self.check_winning_state_player2()
         else:
-            raise Exception("Invalid player")
+            return self.check_winning_state_player1() or self.check_winning_state_player2()
 
     # Player 1 (red) is top to bottom
     def check_winning_state_player1(self):

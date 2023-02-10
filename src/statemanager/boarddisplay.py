@@ -16,7 +16,7 @@ class BoardDisplay:
             figsize=(width*board_skewness_factor*PX, height*PX), num="Hex")
         self.ax = self.fig.add_subplot(111)
 
-    def visualize(self, board, delay=0):
+    def visualize(self, board, delay=0, winner=None):
         self.ax.clear()
         self.ax.set_axis_off()
 
@@ -87,6 +87,11 @@ class BoardDisplay:
             posY += vertical_spacing
 
         plt.title("Hex", fontsize=20)
+
+        if winner is not None:
+            plt.title(
+                f'The winner is player {1 if winner == (1, 0) else 2}', fontsize=20)
+            self.fig.canvas.draw()
 
         # If the delay is greater than 0, it means we want to update the display, and if not we want to only show one display
         if delay > 0:

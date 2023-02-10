@@ -4,15 +4,13 @@ from statemanager.boarddisplay import BoardDisplay
 if __name__ == "__main__":
     board = HexBoard(10)
     board_display = BoardDisplay()
-    board.make_move((0, 0), (1, 0))
-    board_display.visualize(board.convert_to_diamond_shape(), delay=0.5)
-    board.make_move((1, 0), (0, 1))
-    board_display.visualize(board.convert_to_diamond_shape(), delay=0.5)
-    board.make_move((0, 1), (1, 0))
-    board_display.visualize(board.convert_to_diamond_shape(), delay=0.5)
-    board.make_move((2, 0), (0, 1))
-    board_display.visualize(board.convert_to_diamond_shape(), delay=0.5)
-    board.make_move((0, 2), (1, 0))
-    board_display.visualize(board.convert_to_diamond_shape(), delay=0.5)
 
-    board_display.visualize(board.convert_to_diamond_shape())
+    i = 0
+    player = (1, 0)
+    while board.check_winning_state(player) is False:
+        player = (1, 0) if i % 2 == 0 else (0, 1)
+        board.make_random_move(player)
+        i += 1
+        board_display.visualize(board.convert_to_diamond_shape(), delay=0.5)
+
+    board_display.visualize(board.convert_to_diamond_shape(), winner=player)
