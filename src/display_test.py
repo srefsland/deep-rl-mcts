@@ -2,7 +2,7 @@ from statemanager.hexboard import HexBoard
 from statemanager.boarddisplay import BoardDisplay
 
 if __name__ == "__main__":
-    board = HexBoard(10)
+    board = HexBoard(6)
     board_display = BoardDisplay()
 
     i = 0
