@@ -1,1 +1,4 @@
-# it3105-artificial-intelligence-programming
+# AlphaGo Knock-Off project
+
+![Screenshot](./.github/hex.gif)
+
