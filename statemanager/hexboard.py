@@ -1,6 +1,6 @@
 import numpy as np
-from boardcell import BoardCell
-from statemanager import StateManager
+from .boardcell import BoardCell
+from .statemanager import StateManager
 
 # Notes (for square board representation)
 # Player 1 (red): top to bottom

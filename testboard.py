@@ -1,4 +1,4 @@
-from hexboard import HexBoard
+from statemanager.hexboard import HexBoard
 import unittest
 
 
