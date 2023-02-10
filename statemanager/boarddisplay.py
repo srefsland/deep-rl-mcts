@@ -16,8 +16,6 @@ class BoardDisplay:
             figsize=(width*board_skewness_factor*PX, height*PX), num="Hex")
         self.ax = self.fig.add_subplot(111)
 
-        self.ax.set_axis_off()
-
     def visualize(self, board, delay=0):
         self.ax.clear()
         self.ax.set_axis_off()
