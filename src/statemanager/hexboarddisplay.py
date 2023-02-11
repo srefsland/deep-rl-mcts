@@ -1,5 +1,4 @@
 import matplotlib.pyplot as plt
-from .hexboard import HexBoard
 
 BLACK = (0, 0, 0)
 RED = (1, 0, 0)
@@ -7,7 +6,7 @@ WHITE = (1, 1, 1)
 PX = 1/plt.rcParams['figure.dpi']
 
 
-class BoardDisplay:
+class HexBoardDisplay:
     def __init__(self, width=1000, height=800, board_skewness_factor=0.75):
         self.width = width
         self.height = height

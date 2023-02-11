@@ -1,4 +1,4 @@
-class BoardCell:
+class HexBoardCell:
     def __init__(self, x, y):
         self._pos = (x, y)
         self._owner = (0, 0)

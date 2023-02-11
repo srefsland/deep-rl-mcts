@@ -1,9 +1,9 @@
-from statemanager.hexboard import HexBoard
-from statemanager.boarddisplay import BoardDisplay
+from statemanager.hexstatemanager import HexStateManager
+from statemanager.hexboarddisplay import HexBoardDisplay
 
 if __name__ == "__main__":
-    board = HexBoard(6)
-    board_display = BoardDisplay()
+    board = HexStateManager(6)
+    board_display = HexBoardDisplay()
 
     i = 0
     player = (1, 0)

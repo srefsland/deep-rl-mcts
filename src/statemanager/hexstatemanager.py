@@ -1,5 +1,5 @@
 import numpy as np
-from .boardcell import BoardCell
+from .hexboardcell import HexBoardCell
 from .statemanager import StateManager
 
 # Notes (for square board representation)
@@ -7,7 +7,7 @@ from .statemanager import StateManager
 # Player 2 (black): left to right
 
 
-class HexBoard(StateManager):
+class HexStateManager(StateManager):
     def __init__(self, board_size=0, board=None):
         if board is None:
             self.board = self.init_board(board_size)
@@ -17,7 +17,7 @@ class HexBoard(StateManager):
             self.board_size = len(board)
 
     def init_board(self, board_size):
-        board = np.array([[BoardCell(row, col) for col in range(board_size)]
+        board = np.array([[HexBoardCell(row, col) for col in range(board_size)]
                          for row in range(board_size)])
 
         return board
