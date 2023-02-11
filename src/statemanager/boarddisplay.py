@@ -91,11 +91,9 @@ class BoardDisplay:
         if winner is not None:
             plt.title(
                 f'The winner is player {1 if winner == (1, 0) else 2}', fontsize=20)
-            self.fig.canvas.draw()
+            plt.draw()
+            plt.show()
 
         # If the delay is greater than 0, it means we want to update the display, and if not we want to only show one display
         if delay > 0:
-            self.fig.canvas.draw()
             plt.pause(delay)
-        else:
-            plt.show()
