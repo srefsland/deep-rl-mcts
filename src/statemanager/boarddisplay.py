@@ -16,7 +16,7 @@ class BoardDisplay:
             figsize=(width*board_skewness_factor*PX, height*PX), num="Hex")
         self.ax = self.fig.add_subplot(111)
 
-    def visualize(self, board, delay=0, winner=None):
+    def visualize(self, board, delay=0, winner=None, newest_move=None):
         self.ax.clear()
         self.ax.set_axis_off()
 
@@ -77,10 +77,16 @@ class BoardDisplay:
                 color = RED if board[i][j].get_owner() == (
                     1, 0) else BLACK if board[i][j].get_owner() == (0, 1) else WHITE
 
-                self.ax.plot(posX, posY, 'o', markersize=circle_radius,
-                             markeredgecolor=(0, 0, 0),
-                             markerfacecolor=color,
-                             markeredgewidth=1)
+                if newest_move is not None and newest_move == board[i][j].get_position():
+                    self.ax.plot(posX, posY, 'o', markersize=circle_radius*1.15,
+                                 markeredgecolor=(0, 0, 0),
+                                 markerfacecolor=color,
+                                 markeredgewidth=1.5)
+                else:
+                    self.ax.plot(posX, posY, 'o', markersize=circle_radius,
+                                 markeredgecolor=(0, 0, 0),
+                                 markerfacecolor=color,
+                                 markeredgewidth=1)
 
                 posX += horizontal_spacing
 

@@ -9,8 +9,10 @@ if __name__ == "__main__":
     player = (1, 0)
     while board.check_winning_state(player) is False:
         player = (1, 0) if i % 2 == 0 else (0, 1)
-        board.make_random_move(player)
+        move = board.make_random_move(player)
         i += 1
-        board_display.visualize(board.convert_to_diamond_shape(), delay=0.2)
+        board_display.visualize(
+            board.convert_to_diamond_shape(), delay=0.5, newest_move=move)
 
-    board_display.visualize(board.convert_to_diamond_shape(), winner=player)
+    board_display.visualize(
+        board.convert_to_diamond_shape(), winner=player)

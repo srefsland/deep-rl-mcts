@@ -50,13 +50,17 @@ class HexBoard(StateManager):
         if len(moves) == 0:
             return
 
-        self.make_move(moves[np.random.randint(0, len(moves))], player)
+        move = self.make_move(moves[np.random.randint(0, len(moves))], player)
+
+        return move
 
     def make_move(self, move, player):
         if self.is_within_bounds(move[0], move[1]) and self.is_move_legal(move):
             self.board[move[0]][move[1]].set_owner(player)
         else:
             raise Exception("Illegal move")
+
+        return move
 
     def convert_to_1D_array(self):
         return self.board.flatten()
