@@ -37,7 +37,7 @@ class HexBoardDisplay:
         self.ax.plot([], [], 'o', markersize=10, color=BLACK,
                      label='Player 2', markeredgecolor=(0, 0, 0), markeredgewidth=1)
         self.ax.plot([], [], 'o', markersize=10, color=WHITE,
-                     label='Empty cell', markeredgecolor=(0, 0, 0), markeredgewidth=1)
+                     label='Unoccupied', markeredgecolor=(0, 0, 0), markeredgewidth=1)
 
         # Add the legend to the plot
         self.ax.legend(loc='upper left', numpoints=1, fontsize=10)
