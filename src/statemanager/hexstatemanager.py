@@ -96,6 +96,9 @@ class HexStateManager(StateManager):
         moves = self.get_moves_legal()
 
         for move in moves:
+            # When calling copy on a numpy array, it creates a deep copy,
+            # as opposed to when calling copy on a list, so this doesn't
+            # affect the original board
             child_board = self.board.copy()
             child_board[move[0]][move[1]].set_owner(player)
             child_states.append(child_board)
