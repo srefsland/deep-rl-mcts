@@ -1,5 +1,5 @@
 from statemanager.hexstatemanager import HexStateManager
-from statemanager.hexboarddisplay import HexBoardDisplay
+from display.hexboarddisplay import HexBoardDisplay
 
 if __name__ == "__main__":
     board = HexStateManager(6)
@@ -11,8 +11,8 @@ if __name__ == "__main__":
         player = (1, 0) if i % 2 == 0 else (0, 1)
         move = board.make_random_move(player)
         i += 1
-        board_display.visualize(
+        board_display.display_board(
             board.convert_to_diamond_shape(), delay=0.5, newest_move=move)
 
-    board_display.visualize(
+    board_display.display_board(
         board.convert_to_diamond_shape(), winner=player)

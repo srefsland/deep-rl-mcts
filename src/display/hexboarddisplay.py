@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from .gameboarddisplay import GameBoardDisplay
 
 BLACK = (0, 0, 0)
 RED = (1, 0, 0)
@@ -6,7 +7,7 @@ WHITE = (1, 1, 1)
 PX = 1/plt.rcParams['figure.dpi']
 
 
-class HexBoardDisplay:
+class HexBoardDisplay(GameBoardDisplay):
     def __init__(self, width=1000, height=800, board_skewness_factor=0.75):
         self.width = width
         self.height = height
@@ -15,7 +16,7 @@ class HexBoardDisplay:
             figsize=(width*board_skewness_factor*PX, height*PX), num="Hex")
         self.ax = self.fig.add_subplot(111)
 
-    def visualize(self, board, delay=0, winner=None, newest_move=None):
+    def display_board(self, board, delay=0, winner=None, newest_move=None):
         self.ax.clear()
         self.ax.set_axis_off()
 
