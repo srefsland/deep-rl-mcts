@@ -1,4 +1,5 @@
 import numpy as np
+import copy
 from .hexboardcell import HexBoardCell
 from .statemanager import StateManager
 
@@ -8,7 +9,7 @@ from .statemanager import StateManager
 
 
 class HexStateManager(StateManager):
-    def __init__(self, board_size=0, board=None):
+    def __init__(self, board_size=6, board=None):
         if board is None:
             self.board = self.init_board(board_size)
             self.board_size = board_size
@@ -96,11 +97,8 @@ class HexStateManager(StateManager):
         moves = self.get_moves_legal()
 
         for move in moves:
-            # When calling copy on a numpy array, it creates a deep copy,
-            # as opposed to when calling copy on a list, so this doesn't
-            # affect the original board
-            child_board = self.board.copy()
-            child_board[move[0]][move[1]].set_owner(player)
+            child_board = self.copy()
+            child_board.make_move(move, player)
             child_states.append(child_board)
 
         return child_states
@@ -160,3 +158,16 @@ class HexStateManager(StateManager):
                     nodes_to_visit.append(neighbor)
 
         return False
+
+    def find_immediate_winning_move(self, player):
+        for move in self.get_moves_legal():
+            child_state = self.copy()
+            child_state.make_move(move, player)
+
+            if child_state.check_winning_state(player):
+                return move
+
+        return None
+
+    def copy(self):
+        return HexStateManager(board=copy.deepcopy(self.board))
