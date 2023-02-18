@@ -23,11 +23,8 @@ class HexStateManager(StateManager):
 
         return board
 
-    def display_board(self):
-        for row in self.board:
-            for node in row:
-                print(node.get_owner(), end=" ")
-            print()
+    def copy(self):
+        return HexStateManager(board=copy.deepcopy(self.board))
 
     def get_moves_legal(self):
         moves = []
@@ -160,6 +157,10 @@ class HexStateManager(StateManager):
         return False
 
     def find_immediate_winning_move(self, player):
+        # Check that at least one edge is populated
+        if not self.has_one_edge_populated(player):
+            return None
+
         for move in self.get_moves_legal():
             child_state = self.copy()
             child_state.make_move(move, player)
@@ -169,5 +170,10 @@ class HexStateManager(StateManager):
 
         return None
 
-    def copy(self):
-        return HexStateManager(board=copy.deepcopy(self.board))
+    def has_one_edge_populated(self, player):
+        if player == (1, 0):
+            return True if len([col for col in np.concatenate([self.board[0], self.board[self.board_size - 1]]) if col.get_owner() == (1, 0)]) > 0 else False
+        elif player == (0, 1):
+            return True if len([row for row in np.concatenate([self.board[:, 0], self.board[:, self.board_size - 1]]) if row.get_owner() == (0, 1)]) > 0 else False
+        else:
+            return False

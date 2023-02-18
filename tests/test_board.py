@@ -146,5 +146,47 @@ def test_move_making():
     assert board.board[0][1].get_owner() == (1, 0)
 
 
-# if __name__ == '__main__':
-#     unittest.main()
+def test_immediate_winning_move_player1():
+    setup_board_win_state_check = HexStateManager(4)
+    setup_board_win_state_check.board[0][0].set_owner((1, 0))
+    has_winning = setup_board_win_state_check.has_one_edge_populated((1, 0))
+
+    assert has_winning is True
+
+    setup_board_win_state_check = HexStateManager(4)
+    setup_board_win_state_check.board[3][0].set_owner((1, 0))
+    has_winning = setup_board_win_state_check.has_one_edge_populated((1, 0))
+
+    assert has_winning is True
+
+    setup_board_win_state_check = HexStateManager(4)
+
+    setup_board_win_state_check.board[1][0].set_owner((1, 0))
+    setup_board_win_state_check.board[1][3].set_owner((1, 0))
+
+    has_winning = setup_board_win_state_check.has_one_edge_populated((1, 0))
+
+    assert has_winning is False
+
+
+def test_immediate_winning_move_player2():
+    setup_board_win_state_check = HexStateManager(4)
+    setup_board_win_state_check.board[0][0].set_owner((0, 1))
+    has_winning = setup_board_win_state_check.has_one_edge_populated((0, 1))
+
+    assert has_winning is True
+
+    setup_board_win_state_check = HexStateManager(4)
+    setup_board_win_state_check.board[0][3].set_owner((0, 1))
+    has_winning = setup_board_win_state_check.has_one_edge_populated((0, 1))
+
+    assert has_winning is True
+
+    setup_board_win_state_check = HexStateManager(4)
+
+    setup_board_win_state_check.board[1][1].set_owner((0, 1))
+    setup_board_win_state_check.board[1][2].set_owner((0, 1))
+
+    has_winning = setup_board_win_state_check.has_one_edge_populated((0, 1))
+
+    assert has_winning is False
