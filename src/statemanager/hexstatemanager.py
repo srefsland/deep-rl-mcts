@@ -11,22 +11,24 @@ from .statemanager import StateManager
 class HexStateManager(StateManager):
     def __init__(self, board_size=6, board=None):
         if board is None:
-            self.board = self.init_board(board_size)
+            self.board = self.initialize_state(board_size)
             self.board_size = board_size
         else:
             self.board = board
             self.board_size = len(board)
 
-    def init_board(self, board_size):
+    def initialize_state(self, board_size):
         board = np.array([[HexBoardCell(row, col) for col in range(board_size)]
                          for row in range(board_size)])
 
         return board
 
-    def copy(self):
+    def copy_state(self):
         return HexStateManager(board=copy.deepcopy(self.board))
 
-    def get_moves_legal(self):
+    # NOTE: only passes player as parameter to be able to generalize for all types of state manager in 2v2 board games.
+    # In Hex, the available moves are the same for both players.
+    def get_moves_legal(self, player=None):
         moves = []
 
         for row in self.board:
@@ -94,7 +96,7 @@ class HexStateManager(StateManager):
         moves = self.get_moves_legal()
 
         for move in moves:
-            child_board = self.copy()
+            child_board = self.copy_state()
             child_board.make_move(move, player)
             child_states.append(child_board)
 
@@ -162,7 +164,7 @@ class HexStateManager(StateManager):
             return None
 
         for move in self.get_moves_legal():
-            child_state = self.copy()
+            child_state = self.copy_state()
             child_state.make_move(move, player)
 
             if child_state.check_winning_state(player):
