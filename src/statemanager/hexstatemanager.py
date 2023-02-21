@@ -9,13 +9,16 @@ from .statemanager import StateManager
 
 
 class HexStateManager(StateManager):
-    def __init__(self, board_size=6, board=None):
+    def __init__(self, board_size=6, player=(1, 0), board=None):
         if board is None:
             self.board = self.initialize_state(board_size)
             self.board_size = board_size
         else:
             self.board = board
             self.board_size = len(board)
+
+        # Whose turn it is
+        self.player = player
 
     def initialize_state(self, board_size):
         board = np.array([[HexBoardCell(row, col) for col in range(board_size)]
@@ -24,7 +27,7 @@ class HexStateManager(StateManager):
         return board
 
     def copy_state(self):
-        return HexStateManager(board=copy.deepcopy(self.board))
+        return HexStateManager(player=self.player, board=copy.deepcopy(self.board))
 
     # NOTE: only passes player as parameter to be able to generalize for all types of state manager in 2v2 board games.
     # In Hex, the available moves are the same for both players.
@@ -39,12 +42,12 @@ class HexStateManager(StateManager):
         return moves
 
     def is_move_legal(self, move):
-        if self.board[move[0]][move[1]].get_owner() == (0, 0):
-            return True
-        else:
-            return False
+        return self.board[move[0]][move[1]].get_owner() == (0, 0)
 
-    def make_random_move(self, player):
+    def make_random_move(self, player=None):
+        if player is None:
+            player = self.player
+
         moves = self.get_moves_legal()
 
         if len(moves) == 0:
@@ -54,11 +57,16 @@ class HexStateManager(StateManager):
 
         return move
 
-    def make_move(self, move, player):
+    def make_move(self, move, player=None):
+        if player is None:
+            player = self.player
+
         if self.is_within_bounds(move[0], move[1]) and self.is_move_legal(move):
             self.board[move[0]][move[1]].set_owner(player)
         else:
             raise Exception("Illegal move")
+
+        self.player = (0, 1) if player == (1, 0) else (1, 0)
 
         return move
 
@@ -76,7 +84,10 @@ class HexStateManager(StateManager):
     def is_within_bounds(self, row, col):
         return row >= 0 and row < self.board_size and col >= 0 and col < self.board_size
 
-    def expand_neighbors(self, node, player):
+    def expand_neighbors(self, node, player=None):
+        if player is None:
+            player = self.player
+
         row, col = node.get_position()
 
         neighbors_coords = [(row - 1, col), (row + 1, col), (row, col - 1),
@@ -91,7 +102,10 @@ class HexStateManager(StateManager):
 
         return neighbors
 
-    def generate_child_states(self, player):
+    def generate_child_states(self, player=None):
+        if player is None:
+            player = self.player
+
         child_states = []
         moves = self.get_moves_legal()
 
@@ -102,7 +116,10 @@ class HexStateManager(StateManager):
 
         return child_states
 
-    def check_winning_state(self, player=(0, 0)):
+    def check_winning_state(self, player=None):
+        if player is None:
+            player = self.player
+
         if player == (1, 0):
             return self.check_winning_state_player1()
         elif player == (0, 1):
@@ -158,9 +175,11 @@ class HexStateManager(StateManager):
 
         return False
 
-    def find_immediate_winning_move(self, player):
+    def find_immediate_winning_move(self, player=None):
+        if player is None:
+            player = self.player
         # Check that at least one edge is populated
-        if not self.has_one_edge_populated(player):
+        if not self._has_one_edge_populated(player):
             return None
 
         for move in self.get_moves_legal():
@@ -172,7 +191,7 @@ class HexStateManager(StateManager):
 
         return None
 
-    def has_one_edge_populated(self, player):
+    def _has_one_edge_populated(self, player):
         if player == (1, 0):
             return True if len([col for col in np.concatenate([self.board[0], self.board[self.board_size - 1]]) if col.get_owner() == (1, 0)]) > 0 else False
         elif player == (0, 1):
