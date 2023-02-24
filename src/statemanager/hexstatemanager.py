@@ -96,8 +96,7 @@ class HexStateManager(StateManager):
         neighbors = []
 
         for neighbor in neighbors_coords:
-            if self.is_within_bounds(neighbor[0], neighbor[1]):
-                if (self.board[neighbor[0]][neighbor[1]].get_owner() == player):
+            if self.is_within_bounds(neighbor[0], neighbor[1]) and self.board[neighbor[0]][neighbor[1]].get_owner() == player:
                     neighbors.append(self.board[neighbor[0]][neighbor[1]])
 
         return neighbors
