@@ -1,5 +1,6 @@
 import tensorflow as tf
-import nn_options
+
+from . import nn_options
 
 
 class BoardGameNet:

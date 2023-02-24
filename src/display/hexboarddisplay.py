@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 from .gameboarddisplay import GameBoardDisplay
 
 BLACK = (0, 0, 0)

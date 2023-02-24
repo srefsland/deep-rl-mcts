@@ -1,5 +1,7 @@
-import numpy as np
 import copy
+
+import numpy as np
+
 from .hexboardcell import HexBoardCell
 from .statemanager import StateManager
 

@@ -1,6 +1,5 @@
-from statemanager.hexstatemanager import HexStateManager
 from display.hexboarddisplay import HexBoardDisplay
-import copy
+from statemanager.hexstatemanager import HexStateManager
 
 if __name__ == "__main__":
     board = HexStateManager(6)
