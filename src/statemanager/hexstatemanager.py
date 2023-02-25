@@ -99,7 +99,7 @@ class HexStateManager(StateManager):
 
         for neighbor in neighbors_coords:
             if self.is_within_bounds(neighbor[0], neighbor[1]) and self.board[neighbor[0]][neighbor[1]].get_owner() == player:
-                    neighbors.append(self.board[neighbor[0]][neighbor[1]])
+                neighbors.append(self.board[neighbor[0]][neighbor[1]])
 
         return neighbors
 
@@ -199,3 +199,6 @@ class HexStateManager(StateManager):
             return True if len([row for row in np.concatenate([self.board[:, 0], self.board[:, self.board_size - 1]]) if row.get_owner() == (0, 1)]) > 0 else False
         else:
             return False
+
+    def get_eval(self, winner=(1, 0)):
+        return 1 if winner == (1, 0) else -1 if winner == (0, 1) else 0

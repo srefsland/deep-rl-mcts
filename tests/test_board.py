@@ -21,7 +21,6 @@ def test_win_state_player1():
     setup_board_win_state_check.make_move((1, 3), (1, 0))
 
     is_win = setup_board_win_state_check.check_winning_state_player1()
-
     assert is_win is False
 
     setup_board_win_state_check = setup_board((1, 0))
@@ -29,7 +28,6 @@ def test_win_state_player1():
     setup_board_win_state_check.make_move((2, 2), (1, 0))
 
     is_win = setup_board_win_state_check.check_winning_state_player1()
-
     assert is_win is False
 
     setup_board_win_state_check = setup_board((1, 0))
@@ -38,7 +36,6 @@ def test_win_state_player1():
     setup_board_win_state_check.make_move((3, 1), (1, 0))
 
     is_win = setup_board_win_state_check.check_winning_state_player1()
-
     assert is_win is True
 
 
@@ -49,7 +46,6 @@ def test_win_state_player2():
     setup_board_win_state_check.make_move((0, 3), (0, 1))
 
     is_win = setup_board_win_state_check.check_winning_state_player2()
-
     assert is_win is True
 
     setup_board_win_state_check = setup_board((0, 1))
@@ -58,7 +54,6 @@ def test_win_state_player2():
     setup_board_win_state_check.make_move((3, 2), (0, 1))
 
     is_win = setup_board_win_state_check.check_winning_state_player2()
-
     assert is_win is False
 
 
@@ -136,14 +131,12 @@ def test_immediate_winning_move_player1():
     setup_board_win_state_check.make_move((0, 0), (1, 0))
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (1, 0))
-
     assert winning_move is None
 
     setup_board_win_state_check = HexStateManager(4)
     setup_board_win_state_check.make_move((3, 0), (1, 0))
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (1, 0))
-
     assert winning_move is None
 
     setup_board_win_state_check = HexStateManager(4)
@@ -153,14 +146,12 @@ def test_immediate_winning_move_player1():
 
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (1, 0))
-
     assert winning_move is None
 
     setup_board_win_state_check = setup_board((1, 0))
 
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (1, 0))
-
     assert winning_move is not None
 
 
@@ -169,14 +160,12 @@ def test_immediate_winning_move_player2():
     setup_board_win_state_check.make_move((0, 0), (0, 1))
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (0, 1))
-
     assert winning_move is None
 
     setup_board_win_state_check = HexStateManager(4)
     setup_board_win_state_check.make_move((0, 3), (0, 1))
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (0, 1))
-
     assert winning_move is None
 
     setup_board_win_state_check = HexStateManager(4)
@@ -185,12 +174,10 @@ def test_immediate_winning_move_player2():
 
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (0, 1))
-
     assert winning_move is None
 
     setup_board_win_state_check = setup_board((0, 1))
 
     winning_move = setup_board_win_state_check.find_immediate_winning_move(
         (0, 1))
-
     assert winning_move is not None

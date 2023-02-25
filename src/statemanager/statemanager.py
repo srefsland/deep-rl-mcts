@@ -21,7 +21,11 @@ class StateManager(ABC):
     @abstractmethod
     def make_move(self, move, player):
         pass
-    
+
     @abstractmethod
     def copy_state(self):
+        pass
+
+    @abstractmethod
+    def get_eval(self, winner):
         pass
