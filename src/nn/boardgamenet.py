@@ -1,3 +1,4 @@
+import numpy as np
 import tensorflow as tf
 
 from . import nn_options
@@ -23,13 +24,15 @@ class BoardGameNet:
         self.optimizer = nn_options.optimizers[optimizer](
             learning_rate=self.lr)
 
-        self.build_model()
+        self._build_model()
 
-    def build_model(self):
+    def _build_model(self):
         self.model = tf.keras.models.Sequential()
-        # Input needs to be the board size + 1 to include player ID
+        # The input is a 2D array of size (board_size, board_size) with 5 channels
+        # Channel 0 is player 1's celøs, channel 2 is player 2's cells, channel 3 is empty cells,
+        # channel 4 is 1 if current player is player 1, channel 5 is if current player is player 2
         self.model.add(tf.keras.layers.Dense(
-            self.n_neurons, activation=self.activation, input_shape=(self.board_size**2 + 1,)))
+            self.n_neurons, activation=self.activation, input_shape=(self.board_size, self.board_size, 5)))
 
         for _ in range(self.n_layers - 1):
             self.model.add(tf.keras.layers.Dense(
@@ -39,3 +42,16 @@ class BoardGameNet:
             self.board_size**2, activation=self.output_activation))
 
         self.model.compile(optimizer=self.optimizer, loss=self.loss)
+
+    def fit(self, X, y, epochs=10, batch_size=32):
+        self.model.fit(X, y, validation_split=0.2,
+                       epochs=epochs, batch_size=batch_size)
+
+    def predict(self, X):
+        prediction = self.model.predict(X)
+        # Element wise multiplication to remove occupation of empty cells
+        prediction_occupied_removed = prediction * X[:, :, 2]
+        predictions_normalized = prediction_occupied_removed / \
+            np.sum(prediction_occupied_removed)
+
+        return predictions_normalized

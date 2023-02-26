@@ -75,10 +75,10 @@ class HexBoardDisplay(GameBoardDisplay):
                     self.ax.plot([posX, posX_bottom_left], [
                                  posY, posY_bottom_left], '-', color='black')
 
-                color = RED if board[i][j].get_owner() == (
-                    1, 0) else BLACK if board[i][j].get_owner() == (0, 1) else WHITE
+                color = RED if board[i][j].occupant == (
+                    1, 0) else BLACK if board[i][j].occupant == (0, 1) else WHITE
 
-                if newest_move is not None and newest_move == board[i][j].get_position():
+                if newest_move is not None and newest_move == board[i][j].position:
                     self.ax.plot(posX, posY, 'o', markersize=circle_radius*1.15,
                                  markeredgecolor=(0, 0, 0),
                                  markerfacecolor=color,

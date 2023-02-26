@@ -3,10 +3,6 @@ from abc import ABC, abstractmethod
 
 class StateManager(ABC):
     @abstractmethod
-    def initialize_state(self, board_size):
-        pass
-
-    @abstractmethod
     def check_winning_state(self, player):
         pass
 
@@ -28,4 +24,8 @@ class StateManager(ABC):
 
     @abstractmethod
     def get_eval(self, winner):
+        pass
+
+    @abstractmethod
+    def convert_to_nn_input(self):
         pass

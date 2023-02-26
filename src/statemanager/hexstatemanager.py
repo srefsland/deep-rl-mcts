@@ -13,7 +13,7 @@ from .statemanager import StateManager
 class HexStateManager(StateManager):
     def __init__(self, board_size=6, player=(1, 0), board=None):
         if board is None:
-            self.board = self.initialize_state(board_size)
+            self.board = self._initialize_state(board_size)
             self.board_size = board_size
         else:
             self.board = board
@@ -22,7 +22,7 @@ class HexStateManager(StateManager):
         # Whose turn it is
         self.player = player
 
-    def initialize_state(self, board_size):
+    def _initialize_state(self, board_size):
         board = np.array([[HexBoardCell(row, col) for col in range(board_size)]
                          for row in range(board_size)])
 
@@ -38,13 +38,13 @@ class HexStateManager(StateManager):
 
         for row in self.board:
             for node in row:
-                if self.is_move_legal(node.get_position()):
-                    moves.append(node.get_position())
+                if self.is_move_legal(node.position):
+                    moves.append(node.position)
 
         return moves
 
     def is_move_legal(self, move):
-        return self.board[move[0]][move[1]].get_owner() == (0, 0)
+        return self.board[move[0]][move[1]].is_empty()
 
     def make_random_move(self, player=None):
         if player is None:
@@ -63,8 +63,8 @@ class HexStateManager(StateManager):
         if player is None:
             player = self.player
 
-        if self.is_within_bounds(move[0], move[1]) and self.is_move_legal(move):
-            self.board[move[0]][move[1]].set_owner(player)
+        if self._is_within_bounds(move[0], move[1]) and self.is_move_legal(move):
+            self.board[move[0]][move[1]].occupant = player
         else:
             raise Exception("Illegal move")
 
@@ -72,8 +72,27 @@ class HexStateManager(StateManager):
 
         return move
 
-    def convert_to_1D_array(self):
-        return self.board.flatten()
+    # Inspired by the article here: https://www.idi.ntnu.no/emner/it3105/materials/neural/gao-2017.pdf
+    # Should make it possible to feed to convolutional neural network with 5 channels, 3 for occupancy
+    # and 2 for each player's turn
+    def convert_to_nn_input(self):
+        nn_input = np.zeros(
+            shape=(self.board_size, self.board_size, 5), dtype=np.int8)
+
+        is_occupied_player_1 = np.vectorize(
+            lambda x: 1 if x.occupant == (1, 0) else 0)
+        is_occupied_player_2 = np.vectorize(
+            lambda x: 1 if x.occupant == (0, 1) else 0)
+        is_occupied_empty = np.vectorize(
+            lambda x: 1 if x.is_empty() else 0)
+
+        nn_input[:, :, 0] = is_occupied_player_1(self.board)
+        nn_input[:, :, 1] = is_occupied_player_2(self.board)
+        nn_input[:, :, 2] = is_occupied_empty(self.board)
+        nn_input[:, :, 3] = 1 if self.player == (1, 0) else 0
+        nn_input[:, :, 4] = 1 if self.player == (0, 1) else 0
+
+        return nn_input
 
     def convert_to_diamond_shape(self):
         diamond_array = []
@@ -83,14 +102,14 @@ class HexStateManager(StateManager):
 
         return diamond_array
 
-    def is_within_bounds(self, row, col):
+    def _is_within_bounds(self, row, col):
         return row >= 0 and row < self.board_size and col >= 0 and col < self.board_size
 
-    def expand_neighbors(self, node, player=None):
+    def _expand_neighbors(self, node, player=None):
         if player is None:
             player = self.player
 
-        row, col = node.get_position()
+        row, col = node.position
 
         neighbors_coords = [(row - 1, col), (row + 1, col), (row, col - 1),
                             (row, col + 1), (row + 1, col - 1), (row - 1, col + 1)]
@@ -98,7 +117,7 @@ class HexStateManager(StateManager):
         neighbors = []
 
         for neighbor in neighbors_coords:
-            if self.is_within_bounds(neighbor[0], neighbor[1]) and self.board[neighbor[0]][neighbor[1]].get_owner() == player:
+            if self._is_within_bounds(neighbor[0], neighbor[1]) and self.board[neighbor[0]][neighbor[1]].occupant == player:
                 neighbors.append(self.board[neighbor[0]][neighbor[1]])
 
         return neighbors
@@ -115,36 +134,37 @@ class HexStateManager(StateManager):
             child_board.make_move(move, player)
             child_states.append(child_board)
 
-        return child_states
+        # Just makes it easier to keep track of what move was made to get to the child state
+        return zip(child_states, moves)
 
     def check_winning_state(self, player=None):
         if player is None:
             player = self.player
 
         if player == (1, 0):
-            return self.check_winning_state_player1()
+            return self._check_winning_state_player1()
         elif player == (0, 1):
-            return self.check_winning_state_player2()
+            return self._check_winning_state_player2()
         else:
-            return self.check_winning_state_player1() or self.check_winning_state_player2()
+            return self._check_winning_state_player1() or self._check_winning_state_player2()
 
     # Player 1 (red) is top to bottom
-    def check_winning_state_player1(self):
+    def _check_winning_state_player1(self):
         nodes_to_visit = []
         nodes_visited = []
 
         for col in self.board[0]:
-            if col.get_owner() == (1, 0):
+            if col.occupant == (1, 0):
                 nodes_to_visit.append(col)
 
         while len(nodes_to_visit) > 0:
             node = nodes_to_visit.pop(0)
             nodes_visited.append(node)
 
-            if node.get_position()[0] == self.board_size - 1:
+            if node.position[0] == self.board_size - 1:
                 return True
 
-            neighbors = self.expand_neighbors(node, (1, 0))
+            neighbors = self._expand_neighbors(node, (1, 0))
 
             for neighbor in neighbors:
                 if neighbor not in nodes_to_visit and neighbor not in nodes_visited:
@@ -153,52 +173,28 @@ class HexStateManager(StateManager):
         return False
 
     # Player 2 (black) is left to right
-    def check_winning_state_player2(self):
+    def _check_winning_state_player2(self):
         nodes_to_visit = []
         nodes_visited = []
 
         for row in self.board:
-            if row[0].get_owner() == (0, 1):
+            if row[0].occupant == (0, 1):
                 nodes_to_visit.append(row[0])
 
         while len(nodes_to_visit) > 0:
             node = nodes_to_visit.pop(0)
             nodes_visited.append(node)
 
-            if node.get_position()[1] == self.board_size - 1:
+            if node.position[1] == self.board_size - 1:
                 return True
 
-            neighbors = self.expand_neighbors(node, (0, 1))
+            neighbors = self._expand_neighbors(node, (0, 1))
 
             for neighbor in neighbors:
                 if neighbor not in nodes_to_visit and neighbor not in nodes_visited:
                     nodes_to_visit.append(neighbor)
 
         return False
-
-    def find_immediate_winning_move(self, player=None):
-        if player is None:
-            player = self.player
-        # Check that at least one edge is populated
-        if not self._has_one_edge_populated(player):
-            return None
-
-        for move in self.get_moves_legal():
-            child_state = self.copy_state()
-            child_state.make_move(move, player)
-
-            if child_state.check_winning_state(player):
-                return move
-
-        return None
-
-    def _has_one_edge_populated(self, player):
-        if player == (1, 0):
-            return True if len([col for col in np.concatenate([self.board[0], self.board[self.board_size - 1]]) if col.get_owner() == (1, 0)]) > 0 else False
-        elif player == (0, 1):
-            return True if len([row for row in np.concatenate([self.board[:, 0], self.board[:, self.board_size - 1]]) if row.get_owner() == (0, 1)]) > 0 else False
-        else:
-            return False
 
     def get_eval(self, winner=(1, 0)):
         return 1 if winner == (1, 0) else -1 if winner == (0, 1) else 0
