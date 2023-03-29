@@ -4,10 +4,11 @@ from . import MCTSNode
 
 
 class MCTS:
-    def __init__(self, root_state, default_policy, c=1.0):
+    def __init__(self, root_state, default_policy, c=1.0, verbose=False):
         self.c = c
         self.default_policy = default_policy
         self.root = MCTSNode(root_state, None)
+        self.verbose = verbose
 
     def tree_search(self):
         node = self.root
@@ -22,20 +23,24 @@ class MCTS:
 
         return node
 
-    def leaf_evaluation(self, node):
+    def leaf_evaluation(self, node, epsilon):
         node_state_copy = node.state.copy_state()
         board_size = node_state_copy.board_size
 
         # Perform rollout
         while not node_state_copy.check_winning_state():
-            nn_input = node_state_copy.convert_to_nn_input()
+            # Epsilon-greedy policy
+            if np.random.random() < epsilon:
+                node_state_copy.make_random_move()
+            else:
+                nn_input = node_state_copy.convert_to_nn_input()
 
-            predictions = self.default_policy.predict(nn_input)
+                predictions = self.default_policy.predict(nn_input)
 
-            move = np.argmax(predictions)
-            move = (move // board_size, move % board_size)
+                move = np.argmax(predictions)
+                move = (move // board_size, move % board_size)
 
-            node_state_copy.make_move(move)
+                node_state_copy.make_move(move)
 
         # Winner should be the one that took the last move (the one that is not the current player)
         winner = (1, 0) if node_state_copy.player == (0, 1) else (0, 1)

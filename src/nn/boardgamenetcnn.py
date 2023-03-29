@@ -4,7 +4,7 @@ import tensorflow as tf
 from . import nn_options
 
 
-class BoardGameNet:
+class BoardGameNetCNN:
     def __init__(self,
                  n_layers=2,
                  n_neurons=20,
@@ -31,13 +31,18 @@ class BoardGameNet:
         # The input is a 2D array of size (board_size, board_size) with 5 channels
         # Channel 0 is player 1's cells, channel 2 is player 2's cells, channel 3 is empty cells,
         # channel 4 is 1 if current player is player 1, channel 5 is if current player is player 2
-        self.model.add(tf.keras.layers.Dense(
-            self.n_neurons, activation=self.activation, input_shape=(self.board_size, self.board_size, 5)))
+        input_shape = (self.board_size, self.board_size, 5)
 
-        for _ in range(self.n_layers - 1):
+        self.model.add(tf.keraslayers.InputLayer(input_shape=input_shape))
+        self.model.add(tf.keras.layers.Conv2D(
+            32, kernel_size=(3, 3), padding='same', activation='relu'))
+        self.model.add(tf.keras.layers.BatchNormalization())
+
+        for _ in range(self.n_layers):
             self.model.add(tf.keras.layers.Dense(
                 self.n_neurons, activation=self.activation))
 
+        self.model.add(tf.keras.layers.BatchNormalization())
         self.model.add(tf.keras.layers.Dense(
             self.board_size**2, activation=self.output_activation))
 
@@ -50,6 +55,7 @@ class BoardGameNet:
     def predict(self, X):
         prediction = self.model.predict(X)
         # Element wise multiplication to remove occupation of empty cells
+        # All unoccupied cells are 1, thereby removing occupied cells
         prediction_occupied_removed = prediction * X[:, :, 2]
         predictions_normalized = prediction_occupied_removed / \
             np.sum(prediction_occupied_removed)
