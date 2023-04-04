@@ -41,7 +41,9 @@ class MCTSNode:
             visit_distribution = visit_distribution / \
                 np.sum(visit_distribution)
 
-        return visit_distribution.flatten()
+        visit_distribution = np.expand_dims(
+            visit_distribution.flatten(), axis=0)
+        return visit_distribution
 
     def is_root(self):
         return self.parent is None

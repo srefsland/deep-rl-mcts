@@ -1,6 +1,6 @@
 import numpy as np
 
-from . import MCTSNode
+from .mctsnode import MCTSNode
 
 
 class MCTS:
@@ -13,10 +13,10 @@ class MCTS:
     def tree_search(self):
         node = self.root
 
-        while not node.is_leaf():
+        while not node.is_leaf_node():
             node = self.select_best_ucb(node)
 
-        if not node.is_terminal() and node.n >= 10:
+        if not node.is_terminal():
             node.expand()
 
             node = self.select_best_ucb(node)
@@ -49,7 +49,7 @@ class MCTS:
         return reward
 
     def backpropagation(self, node, reward):
-        while not node.is_root():
+        while not node == None:
             node.update_values(reward)
             node = node.parent
 
@@ -63,15 +63,30 @@ class MCTS:
 
     # Exploration term
     def get_exploration_bonus(self, node, child_node):
-        return self.c * np.sqrt(np.log(node.n) / child_node.nsa)
+        return np.inf if child_node.nsa == 0 or node.n == 0 else self.c * np.sqrt(np.log(node.n) / (1 + child_node.nsa))
 
     def select_best_ucb(self, node):
         node_children = node.children
 
+        vectorized_get_ucb = np.vectorize(
+            lambda child: self.get_ucb(node, child))
+        ucb_values = vectorized_get_ucb(node_children)
+
         if node.state.player == (1, 0):
-            return node_children[np.argmax(self.get_ucb(node, node_children))]
+            return node_children[np.argmax(ucb_values)]
         else:
-            return node_children[np.argmin(self.get_ucb(node, node_children))]
+            return node_children[np.argmin(ucb_values)]
+
+    def select_best_distribution(self):
+        node = self.root
+        node_children = node.children
+
+        get_nsa = np.vectorize(lambda child: child.nsa)
+
+        if node.state.player == (1, 0):
+            return node_children[np.argmax(get_nsa(node_children))]
+        else:
+            return node_children[np.argmin(get_nsa(node_children))]
 
     def prune_tree(self, node):
         self.root = node

@@ -1,7 +1,7 @@
 from src.mcts.mctsnode import MCTSNode
 from src.statemanager.hexstatemanager import HexStateManager
 
-import pytest
+import numpy as np
 
 
 def setup_node():
@@ -24,6 +24,7 @@ def test_empty_distribution():
     node.expand()
 
     distribution = node.get_visit_distribution()
+    distribution = np.squeeze(distribution)
 
     assert len(distribution) == 16
     assert sum(distribution) == 0
@@ -38,6 +39,7 @@ def test_non_empty_distribution():
         node.nsa = i
 
     distribution = root_node.get_visit_distribution()
+    distribution = np.squeeze(distribution)
 
     assert distribution[3] == 0
     assert len(distribution) == 16

@@ -43,6 +43,16 @@ class HexStateManager(StateManager):
 
         return moves
 
+    def print_board(self):
+        for row in self.board:
+            for node in row:
+                occupant = 1 if node.occupant == (1, 0) else 2 if node.occupant == (
+                    0, 1) else 0
+                print(occupant, end=' ')
+            print()
+        
+        print()
+
     def is_move_legal(self, move):
         return self.board[move[0]][move[1]].is_empty()
 
@@ -92,6 +102,8 @@ class HexStateManager(StateManager):
         nn_input[:, :, 3] = 1 if self.player == (1, 0) else 0
         nn_input[:, :, 4] = 1 if self.player == (0, 1) else 0
 
+        nn_input = np.expand_dims(nn_input, axis=0)
+
         return nn_input
 
     def convert_to_diamond_shape(self):
@@ -138,9 +150,6 @@ class HexStateManager(StateManager):
         return zip(child_states, moves)
 
     def check_winning_state(self, player=None):
-        if player is None:
-            player = self.player
-
         if player == (1, 0):
             return self._check_winning_state_player1()
         elif player == (0, 1):

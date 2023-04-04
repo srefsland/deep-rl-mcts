@@ -190,4 +190,7 @@ poetry.toml
 .ionide
 .vscode
 
+models/
+
+mcts_simulation_stats.prof
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode

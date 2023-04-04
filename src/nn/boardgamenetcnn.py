@@ -13,7 +13,8 @@ class BoardGameNetCNN:
                  output_activation="softmax",
                  loss="categorical_crossentropy",
                  optimizer="Adam",
-                 board_size=6):
+                 board_size=6,
+                 saved_model=None):
         self.n_layers = n_layers
         self.n_neurons = n_neurons
         self.lr = lr
@@ -24,7 +25,10 @@ class BoardGameNetCNN:
         self.optimizer = nn_options.optimizers[optimizer](
             learning_rate=self.lr)
 
-        self._build_model()
+        if not saved_model:
+            self._build_model()
+        else:
+            self.model = tf.keras.models.load_model(saved_model)
 
     def _build_model(self):
         self.model = tf.keras.models.Sequential()
@@ -33,10 +37,11 @@ class BoardGameNetCNN:
         # channel 4 is 1 if current player is player 1, channel 5 is if current player is player 2
         input_shape = (self.board_size, self.board_size, 5)
 
-        self.model.add(tf.keraslayers.InputLayer(input_shape=input_shape))
+        self.model.add(tf.keras.layers.InputLayer(input_shape=input_shape))
         self.model.add(tf.keras.layers.Conv2D(
             32, kernel_size=(3, 3), padding='same', activation='relu'))
         self.model.add(tf.keras.layers.BatchNormalization())
+        self.model.add(tf.keras.layers.Flatten())
 
         for _ in range(self.n_layers):
             self.model.add(tf.keras.layers.Dense(
@@ -50,14 +55,19 @@ class BoardGameNetCNN:
 
     def fit(self, X, y, epochs=10, batch_size=32):
         self.model.fit(X, y, validation_split=0.2,
-                       epochs=epochs, batch_size=batch_size)
+                       epochs=epochs, batch_size=batch_size, verbose=0)
 
     def predict(self, X):
-        prediction = self.model.predict(X)
+        prediction = self.model.predict(X, verbose=0)
         # Element wise multiplication to remove occupation of empty cells
         # All unoccupied cells are 1, thereby removing occupied cells
-        prediction_occupied_removed = prediction * X[:, :, 2]
+        prediction = prediction.reshape((self.board_size, self.board_size))
+
+        prediction_occupied_removed = prediction * X[0, :, :, 2]
         predictions_normalized = prediction_occupied_removed / \
             np.sum(prediction_occupied_removed)
 
         return predictions_normalized
+
+    def save_model(self, path):
+        self.model.save(path)
