@@ -50,7 +50,7 @@ class HexStateManager(StateManager):
                     0, 1) else 0
                 print(occupant, end=' ')
             print()
-        
+
         print()
 
     def is_move_legal(self, move):

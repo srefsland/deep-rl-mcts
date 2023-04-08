@@ -28,11 +28,9 @@ class BoardGameNet:
 
     def _build_model(self):
         self.model = tf.keras.models.Sequential()
-        # The input is a 2D array of size (board_size, board_size) with 5 channels
-        # Channel 0 is player 1's cells, channel 2 is player 2's cells, channel 3 is empty cells,
-        # channel 4 is 1 if current player is player 1, channel 5 is if current player is player 2
+
         self.model.add(tf.keras.layers.Dense(
-            self.n_neurons, activation=self.activation, input_shape=(self.board_size, self.board_size, 5)))
+            self.n_neurons, activation=self.activation, input_shape=(self.board_size**2 + 1,)))
 
         for _ in range(self.n_layers - 1):
             self.model.add(tf.keras.layers.Dense(
@@ -45,13 +43,20 @@ class BoardGameNet:
 
     def fit(self, X, y, epochs=10, batch_size=32):
         self.model.fit(X, y, validation_split=0.2,
-                       epochs=epochs, batch_size=batch_size)
+                       epochs=epochs, batch_size=batch_size, verbose=0)
 
     def predict(self, X):
-        prediction = self.model.predict(X)
+        prediction = self.model.predict(X, verbose=0)
         # Element wise multiplication to remove occupation of empty cells
-        prediction_occupied_removed = prediction * X[:, :, 2]
+        mask = X[0, :-1]
+        # Only keep the predictions for the empty cells
+        mask = (mask == 0).astype(int)
+
+        prediction_occupied_removed = prediction * mask
         predictions_normalized = prediction_occupied_removed / \
             np.sum(prediction_occupied_removed)
 
-        return predictions_normalized
+        return predictions_normalized.reshape((self.board_size, self.board_size))
+
+    def save_model(self, path):
+        self.model.save(path)

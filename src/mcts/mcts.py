@@ -63,7 +63,7 @@ class MCTS:
 
     # Exploration term
     def get_exploration_bonus(self, node, child_node):
-        return np.inf if child_node.nsa == 0 or node.n == 0 else self.c * np.sqrt(np.log(node.n) / (1 + child_node.nsa))
+        return self.c * np.sqrt(np.log(node.n + 1) / (child_node.nsa + 1))
 
     def select_best_ucb(self, node):
         node_children = node.children
@@ -83,10 +83,7 @@ class MCTS:
 
         get_nsa = np.vectorize(lambda child: child.nsa)
 
-        if node.state.player == (1, 0):
-            return node_children[np.argmax(get_nsa(node_children))]
-        else:
-            return node_children[np.argmin(get_nsa(node_children))]
+        return node_children[np.argmax(get_nsa(node_children))]
 
     def prune_tree(self, node):
         self.root = node

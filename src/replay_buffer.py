@@ -3,7 +3,7 @@ from collections import deque
 
 
 class ReplayBuffer:
-    def __init__(self, maxlen=400):
+    def __init__(self, maxlen=800):
         # Deque should be more efficient than the previous list, since the time complexity of appending and popping from a deque is constant
         self.replay_buffer = deque(maxlen=maxlen)
 
@@ -16,12 +16,10 @@ class ReplayBuffer:
 
     def get_random_minibatch(self, batch_size):
         cases = self.replay_buffer
+        batch_size = min(batch_size, len(cases))
 
-        if len(cases) > batch_size:
-            row_idx = np.random.choice(len(cases), batch_size, replace=False)
-            minibatch = [cases[i] for i in row_idx]
-        else:
-            minibatch = cases
+        row_idx = np.random.choice(len(cases), size=batch_size, replace=False)
+        minibatch = [cases[i] for i in row_idx]
 
         X = np.concatenate([x.astype(np.float32)
                            for x, _ in minibatch], axis=0)

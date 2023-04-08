@@ -6,6 +6,27 @@ import replay_buffer
 
 import cProfile
 import pstats
+from tqdm import tqdm
+import time
+import os
+
+import threading
+from concurrent.futures import ThreadPoolExecutor
+
+
+def parallel_tree_search(mcts_tree, epsilon, lock, counter):
+    start_time = time.time()
+    while time.time() - start_time < 1 or counter[0] < 200:
+        with lock:
+            node = mcts_tree.tree_search()
+
+        reward = mcts_tree.leaf_evaluation(node, epsilon)
+
+        with lock:
+            mcts_tree.backpropagation(node, reward)
+            counter[0] += 1
+
+    return True
 
 
 def rl_algorithm():
@@ -26,7 +47,7 @@ def rl_algorithm():
     i_s = config.SAVE_INTERVAL
     replay_buf.clear()
 
-    for g_a in range(101):  # config.NUM_EPISODES):
+    for g_a in tqdm(range(config.NUM_EPISODES + 1)):
         print(f"Game {g_a}")
         root_state = HexStateManager(config.BOARD_SIZE)
 
@@ -35,13 +56,34 @@ def rl_algorithm():
         s = mcts_tree.root
 
         while not s.state.check_winning_state():
-            for g_s in range(config.MTCS_SIMULATIONS):
-                if g_s == 10:
-                    pass
+            if config.MCTS_DYNAMIC_SIMS:
+                # start_time = time.time()
+                # i = 0
 
-                node = mcts_tree.tree_search()
-                reward = mcts_tree.leaf_evaluation(node, epsilon)
-                mcts_tree.backpropagation(node, reward)
+                # while time.time() - start_time < 1 or i < 50:
+                #     i += 1
+                #     node = mcts_tree.tree_search()
+                #     reward = mcts_tree.leaf_evaluation(node, epsilon)
+                #     mcts_tree.backpropagation(node, reward)
+
+                # print(f"Number of simulations: {i}")
+                counter = [0]
+                lock = threading.Lock()
+
+                with ThreadPoolExecutor() as executor:
+                    futures = [executor.submit(parallel_tree_search, mcts_tree, epsilon,
+                                               lock, counter) for _ in range(os.cpu_count())]
+
+                    # Wait for all the futures to complete execution
+                    for future in futures:
+                        future.result()
+
+                print(f"Number of simulations: {counter[0]}")
+            else:
+                for g_s in range(config.MTCS_SIMULATIONS + 1):
+                    node = mcts_tree.tree_search()
+                    reward = mcts_tree.leaf_evaluation(node, epsilon)
+                    mcts_tree.backpropagation(node, reward)
 
             D = mcts_tree.get_visit_distribution()
             replay_buf.add_case(
@@ -63,6 +105,6 @@ def rl_algorithm():
     profiler.dump_stats(stats_filename)
 
 
-#rl_algorithm()
+rl_algorithm()
 stats = pstats.Stats("mcts_simulation_stats.prof")
-stats.strip_dirs().sort_stats("cumtime").print_stats()
+stats.strip_dirs().sort_stats("cumtime").print_stats("boardgamenetcnn.py")

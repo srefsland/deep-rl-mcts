@@ -53,7 +53,7 @@ class BoardGameNetCNN:
 
         self.model.compile(optimizer=self.optimizer, loss=self.loss)
 
-    def fit(self, X, y, epochs=10, batch_size=32):
+    def fit(self, X, y, epochs=5, batch_size=32):
         self.model.fit(X, y, validation_split=0.2,
                        epochs=epochs, batch_size=batch_size, verbose=0)
 
@@ -61,13 +61,13 @@ class BoardGameNetCNN:
         prediction = self.model.predict(X, verbose=0)
         # Element wise multiplication to remove occupation of empty cells
         # All unoccupied cells are 1, thereby removing occupied cells
-        prediction = prediction.reshape((self.board_size, self.board_size))
+        mask = X[0, :, :, 2].flatten()
 
-        prediction_occupied_removed = prediction * X[0, :, :, 2]
+        prediction_occupied_removed = prediction * mask
         predictions_normalized = prediction_occupied_removed / \
             np.sum(prediction_occupied_removed)
 
-        return predictions_normalized
+        return predictions_normalized.reshape((self.board_size, self.board_size))
 
     def save_model(self, path):
         self.model.save(path)

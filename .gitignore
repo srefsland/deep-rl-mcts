@@ -191,6 +191,8 @@ poetry.toml
 .vscode
 
 models/
+models_cnn/
 
 mcts_simulation_stats.prof
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode
+.DS_Store

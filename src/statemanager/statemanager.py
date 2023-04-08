@@ -27,5 +27,5 @@ class StateManager(ABC):
         pass
 
     @abstractmethod
-    def convert_to_nn_input(self):
+    def convert_to_nn_input(self, model_type):
         pass
