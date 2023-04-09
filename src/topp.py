@@ -86,23 +86,23 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0):
 
 
 if __name__ == "__main__":
-    board_size = 5
+    board_size = 3
     model = BoardGameNetCNN(
         saved_model=f"models/model_{board_size}x{board_size}_0", board_size=board_size)
     model2 = BoardGameNetCNN(
         saved_model=f"models/model_{board_size}x{board_size}_50", board_size=board_size)
-    # model3 = BoardGameNetCNN(
-    #     saved_model=f"models/model_{board_size}x{board_size}_100", board_size=board_size)
-    # model4 = BoardGameNetCNN(
-    #     saved_model=f"models/model_3x3_150", board_size=board_size)
-    # model5 = BoardGameNetCNN(
-    #     saved_model=f"models/model_3x3_200", board_size=board_size)
+    model3 = BoardGameNetCNN(
+        saved_model=f"models/model_{board_size}x{board_size}_100", board_size=board_size)
+    model4 = BoardGameNetCNN(
+        saved_model=f"models/model_{board_size}x{board_size}_150", board_size=board_size)
+    model5 = BoardGameNetCNN(
+        saved_model=f"models/model_{board_size}x{board_size}_200", board_size=board_size)
 
     agent1 = Agent("model_0", model)
     agent2 = Agent("model_50", model2)
-    # agent3 = Agent("model_100", model3)
-    # agent4 = Agent("model_150", model4)
-    # agent5 = Agent("model_200", model5)
+    agent3 = Agent("model_100", model3)
+    agent4 = Agent("model_150", model4)
+    agent5 = Agent("model_200", model5)
 
-    run_tournament([agent1, agent2],
+    run_tournament([agent1, agent2, agent3, agent4, agent5],
                    board_size=board_size, temperature=0.5)

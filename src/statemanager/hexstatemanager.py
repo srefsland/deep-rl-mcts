@@ -205,5 +205,20 @@ class HexStateManager(StateManager):
 
         return False
 
+    def has_winning_move(self, player=None):
+        if player is None:
+            player = self.player
+
+        moves = self.get_moves_legal()
+
+        for move in moves:
+            child_board = self.copy_state()
+            child_board.make_move(move, player)
+
+            if child_board.check_winning_state(player):
+                return move
+
+        return None
+
     def get_eval(self, winner=(1, 0)):
         return 1 if winner == (1, 0) else -1 if winner == (0, 1) else 0

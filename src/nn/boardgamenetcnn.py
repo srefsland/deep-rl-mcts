@@ -6,8 +6,7 @@ from . import nn_options
 
 class BoardGameNetCNN:
     def __init__(self,
-                 n_layers=2,
-                 n_neurons=20,
+                 neural_network_dimensions=(64, 32),
                  lr=0.001,
                  activation="relu",
                  output_activation="softmax",
@@ -15,8 +14,7 @@ class BoardGameNetCNN:
                  optimizer="Adam",
                  board_size=6,
                  saved_model=None):
-        self.n_layers = n_layers
-        self.n_neurons = n_neurons
+        self.neural_network_dimensions = neural_network_dimensions
         self.lr = lr
         self.activation = nn_options.activation_functions[activation]
         self.output_activation = nn_options.activation_functions[output_activation]
@@ -43,9 +41,9 @@ class BoardGameNetCNN:
         self.model.add(tf.keras.layers.BatchNormalization())
         self.model.add(tf.keras.layers.Flatten())
 
-        for _ in range(self.n_layers):
+        for i in range(len(self.neural_network_dimensions)):
             self.model.add(tf.keras.layers.Dense(
-                self.n_neurons, activation=self.activation))
+                self.neural_network_dimensions[i], activation=self.activation))
 
         self.model.add(tf.keras.layers.BatchNormalization())
         self.model.add(tf.keras.layers.Dense(

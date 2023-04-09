@@ -45,5 +45,15 @@ class MCTSNode:
             visit_distribution.flatten(), axis=0)
         return visit_distribution
 
+    def get_winning_distribution(self, move):
+        visit_distribution = np.zeros(
+            (self.state.board_size, self.state.board_size))
+
+        visit_distribution[move[0], move[1]] = 1
+
+        visit_distribution = np.expand_dims(
+            visit_distribution.flatten(), axis=0)
+        return visit_distribution
+
     def is_root(self):
         return self.parent is None

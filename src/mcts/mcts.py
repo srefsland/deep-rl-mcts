@@ -91,3 +91,6 @@ class MCTS:
 
     def get_visit_distribution(self):
         return self.root.get_visit_distribution()
+
+    def get_winning_distribution(self, winning_move):
+        return self.root.get_winning_distribution(winning_move)

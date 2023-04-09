@@ -51,6 +51,8 @@ def visualize_one_game(actor1_episodes=100, actor2_episodes=50, board_size=4, ra
         board_display.display_board(
             board.convert_to_diamond_shape(), delay=0.5, newest_move=new_move)
 
+        board_display.check_number_of_figures()
+
         is_terminal = board.check_winning_state(current_player)
 
     board_display.display_board(
@@ -116,7 +118,10 @@ def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random
 
 
 if __name__ == "__main__":
-    # compare_models(50, 50, 5, random_player1=False,
-    #                random_player2=True, best_move=True)
-    visualize_one_game(50, 50, 5, random_player1=True,
+    mode = 'compare'
+    if mode == 'compare':
+        compare_models(50, 50, 5, random_player1=True,
                        random_player2=False, best_move=True)
+    else:
+        visualize_one_game(50, 50, 7, random_player1=False,
+                           random_player2=True, best_move=True)

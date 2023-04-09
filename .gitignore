@@ -192,6 +192,7 @@ poetry.toml
 
 models/
 models_cnn/
+cached_models/
 
 mcts_simulation_stats.prof
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode
