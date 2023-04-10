@@ -1,4 +1,9 @@
 from .ActorClient import ActorClient
+from ..actor import Actor
+
+model = None
+board_size = 7
+hex_actor = Actor('hex_actor', model, board_size=board_size)
 
 
 class MyClient(ActorClient):
@@ -61,10 +66,13 @@ class MyClient(ActorClient):
                 --0--
                  /|
         """
-        self.logger.info('Get action: state=%s', state)
-        row, col = self.get_random_action(state)
-        self.logger.info('Picked random: row=%s col=%s', row, col)
-        return row, col
+        nn_input = hex_actor.convert_state_to_nn_input(state)
+
+        move = hex_actor.predict_move(nn_input)
+        move = (int(move[0]), int(move[1]))
+        self.logger.info(f'Get action: state={state}')
+        self.logger.info(f'Picked deliberate move: {move[0]} {move[1]}')
+        return move[0], move[1]
 
     def handle_game_over(self, winner, end_state):
         """Called after each game

@@ -1,30 +1,8 @@
 from itertools import combinations
 from statemanager.hexstatemanager import HexStateManager
-import numpy as np
 import matplotlib.pyplot as plt
 from nn.boardgamenetcnn import BoardGameNetCNN
-
-
-class Agent():
-    def __init__(self, name, model):
-        self.name = name
-        self.model = model
-
-    def predict_move(self, model_input, temperature=1.0):
-        if np.random.random() < temperature:
-            moves = self.model.predict(model_input).reshape(-1,)
-
-            indices = np.arange(len(moves))
-
-            move = np.random.choice(indices, p=moves)
-        else:
-            moves = self.model.predict(model_input).reshape(-1,)
-
-            move = np.argmax(moves)
-
-        move = (move // board_size, move % board_size)
-
-        return move
+from .actor import Actor
 
 
 def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
@@ -98,11 +76,11 @@ if __name__ == "__main__":
     model5 = BoardGameNetCNN(
         saved_model=f"models/model_{board_size}x{board_size}_200", board_size=board_size)
 
-    agent1 = Agent("model_0", model)
-    agent2 = Agent("model_50", model2)
-    agent3 = Agent("model_100", model3)
-    agent4 = Agent("model_150", model4)
-    agent5 = Agent("model_200", model5)
+    agent1 = Actor("model_0", model, board_size=board_size)
+    agent2 = Actor("model_50", model2, board_size=board_size)
+    agent3 = Actor("model_100", model3, board_size=board_size)
+    agent4 = Actor("model_150", model4, board_size=board_size)
+    agent5 = Actor("model_200", model5, board_size=board_size)
 
     run_tournament([agent1, agent2, agent3, agent4, agent5],
                    board_size=board_size, temperature=0.5)
