@@ -85,6 +85,16 @@ class MCTS:
 
         return node_children[np.argmax(get_nsa(node_children))]
 
+    def select_winning_move(self, winning_move):
+        node = self.root
+        node_children = node.children
+
+        has_move = np.vectorize(lambda child: child.move == winning_move)
+        # Get the node child that has the winning move, childs have node attribute
+        winning_child = node_children[has_move(node_children)][0]
+
+        return winning_child
+
     def prune_tree(self, node):
         self.root = node
         self.root.parent = None

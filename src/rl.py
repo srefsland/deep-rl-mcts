@@ -57,6 +57,8 @@ def rl_algorithm():
                          c=config.MTCS_C, verbose=config.MCTS_VERBOSE)
         s = mcts_tree.root
 
+        winning_move = None
+
         moves = 0
         while not s.state.check_winning_state():
             winning_move = None
@@ -101,7 +103,8 @@ def rl_algorithm():
             ) if winning_move is None else mcts_tree.get_winning_distribution(winning_move)
             replay_buf.add_case(
                 (mcts_tree.root.state.convert_to_nn_input(), D))
-            s = mcts_tree.select_best_distribution()
+            s = mcts_tree.select_best_distribution(
+            ) if winning_move is None else mcts_tree.select_winning_move(winning_move)
             # if config.DISPLAY_GAME_RL:
             #    display.display_board(s.state.convert_to_diamond_shape(
             #
