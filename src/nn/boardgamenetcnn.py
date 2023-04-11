@@ -53,7 +53,7 @@ class BoardGameNetCNN:
 
     def fit(self, X, y, epochs=5, batch_size=32):
         self.model.fit(X, y, validation_split=0.2,
-                       epochs=epochs, batch_size=batch_size, verbose=0)
+                       epochs=epochs, batch_size=batch_size)
 
     def predict(self, X):
         prediction = self.model.predict(X, verbose=0)

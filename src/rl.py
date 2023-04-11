@@ -10,6 +10,7 @@ import pstats
 from tqdm import tqdm
 import time
 import os
+import gc
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -31,8 +32,8 @@ def parallel_tree_search(mcts_tree, epsilon, lock, counter):
 
 
 def rl_algorithm():
-    profiler = cProfile.Profile()
-    profiler.enable()
+    # profiler = cProfile.Profile()
+    # profiler.enable()
     # display = HexBoardDisplay()
 
     epsilon = config.EPSILON
@@ -65,28 +66,28 @@ def rl_algorithm():
 
             print(f"Move {moves}")
             if config.MCTS_DYNAMIC_SIMS and winning_move is None:
-                # start_time = time.time()
-                # i = 0
+                start_time = time.time()
+                i = 0
 
-                # while time.time() - start_time < 1 or i < 200:
-                #     i += 1
-                #     node = mcts_tree.tree_search()
-                #     reward = mcts_tree.leaf_evaluation(node, epsilon)
-                #     mcts_tree.backpropagation(node, reward)
+                while time.time() - start_time < 1 or i < config.MCTS_MIN_SIMULATIONS:
+                    i += 1
+                    node = mcts_tree.tree_search()
+                    reward = mcts_tree.leaf_evaluation(node, epsilon)
+                    mcts_tree.backpropagation(node, reward)
 
-                # print(f"Number of simulations: {i}")
-                counter = [0]
-                lock = threading.Lock()
+                print(f"Number of simulations: {i}")
+                # counter = [0]
+                # lock = threading.Lock()
 
-                with ThreadPoolExecutor() as executor:
-                    futures = [executor.submit(parallel_tree_search, mcts_tree, epsilon,
-                                               lock, counter) for _ in range(min(os.cpu_count(), 4))]
+                # with ThreadPoolExecutor() as executor:
+                #     futures = [executor.submit(parallel_tree_search, mcts_tree, epsilon,
+                #                                lock, counter) for _ in range(min(os.cpu_count(), 6))]
 
-                    # Wait for all the futures to complete execution
-                    for future in futures:
-                        future.result()
+                #     # Wait for all the futures to complete execution
+                #     for future in futures:
+                #         future.result()
 
-                print(f"Number of simulations: {counter[0]}")
+                # print(f"Number of simulations: {counter[0]}")
             else:
                 for g_s in range(config.MTCS_SIMULATIONS + 1):
                     node = mcts_tree.tree_search()
@@ -117,11 +118,12 @@ def rl_algorithm():
             nn.save_model(
                 f"models/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{g_a}")
 
-    profiler.disable()
-    stats_filename = "mcts_simulation_stats.prof"
-    profiler.dump_stats(stats_filename)
+    # profiler.disable()
+    # stats_filename = "mcts_simulation_stats.prof"
+    # profiler.dump_stats(stats_filename)
 
 
-rl_algorithm()
-stats = pstats.Stats("mcts_simulation_stats.prof")
-stats.strip_dirs().sort_stats("cumtime").print_stats("boardgamenetcnn.py")
+if __name__ == "__main__":
+    rl_algorithm()
+    stats = pstats.Stats("mcts_simulation_stats.prof")
+    stats.strip_dirs().sort_stats("cumtime").print_stats("boardgamenetcnn.py")

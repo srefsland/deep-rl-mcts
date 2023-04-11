@@ -99,7 +99,7 @@ class HexBoardDisplay(GameBoardDisplay):
             plt.title(
                 f'The winner is player {1 if winner == (1, 0) else 2}', fontsize=20)
             plt.draw()
-            plt.show()
+            plt.pause(delay)
 
         # If the delay is greater than 0, it means we want to update the display, and if not we want to only show one display
         if delay > 0:

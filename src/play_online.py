@@ -1,8 +1,10 @@
-from .ActorClient import ActorClient
-from ..actor import Actor
+from oht.ActorClient import ActorClient
+from actor import Actor
+from nn.boardgamenetcnn import BoardGameNetCNN
 
-model = None
 board_size = 7
+model = BoardGameNetCNN(
+    saved_model=f"cached_models/model_{board_size}x{board_size}_{50}", board_size=board_size)
 hex_actor = Actor('hex_actor', model, board_size=board_size)
 
 
@@ -119,3 +121,8 @@ class MyClient(ActorClient):
             score (float): Your score (your win %) for the tournament
         """
         self.logger.info('Tournament over: score=%s', score)
+
+
+if __name__ == '__main__':
+    client = MyClient()
+    client.run()
