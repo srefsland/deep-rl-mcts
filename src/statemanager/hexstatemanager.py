@@ -23,17 +23,38 @@ class HexStateManager(StateManager):
         self.player = player
 
     def _initialize_state(self, board_size):
+        """Initializes state of the board.
+
+        Args:
+            board_size (int): size of the board.
+
+        Returns:
+            np.ndarray: the newly created board.
+        """
         board = np.array([[HexBoardCell(row, col) for col in range(board_size)]
                          for row in range(board_size)])
 
         return board
 
     def copy_state(self):
+        """Creates a deep copy of the current state of the game.
+
+        Returns:
+            _type_: new state manager with the same state as the current one.
+        """
         return HexStateManager(player=self.player, board=copy.deepcopy(self.board))
 
     # NOTE: only passes player as parameter to be able to generalize for all types of state manager in 2v2 board games.
     # In Hex, the available moves are the same for both players.
     def get_moves_legal(self, player=None):
+        """Fetches the legal moves for the current player, which is the empty cells.
+
+        Args:
+            player (tuple[int, int], optional): The player to get the moves for. Defaults to None.
+
+        Returns:
+            list[tuple[int, int]]: the current legal moves, represented as (x, y) coordinates.
+        """
         moves = []
 
         for row in self.board:
@@ -44,6 +65,8 @@ class HexStateManager(StateManager):
         return moves
 
     def print_board(self):
+        """Prints the current state of the board to the terminal. Mostly for debugging purposes.
+        """
         for row in self.board:
             for node in row:
                 occupant = 1 if node.occupant == (1, 0) else 2 if node.occupant == (
@@ -54,9 +77,25 @@ class HexStateManager(StateManager):
         print()
 
     def is_move_legal(self, move):
+        """Checks if the move is legal, i.e. if the cell is empty.
+
+        Args:
+            move (tuple[int, int]): the move to check.
+
+        Returns:
+            bool: true if the move is legal, false otherwise.
+        """
         return self.board[move[0]][move[1]].is_empty()
 
     def make_random_move(self, player=None):
+        """Makes a random move for the current player.
+
+        Args:
+            player (tuple[int, int], optional): the player to make the moves for. Defaults to None.
+
+        Returns:
+            tuple[int, int]: the randomly chosen move.
+        """
         if player is None:
             player = self.player
 
@@ -70,6 +109,18 @@ class HexStateManager(StateManager):
         return move
 
     def make_move(self, move, player=None):
+        """Update the game state by making the provided move.
+
+        Args:
+            move (tuple[int, int]): the move to be made.
+            player (tuple[int, int], optional): the player that makes the move. Defaults to None.
+
+        Raises:
+            Exception: is raised if move is not legal (i.e. a non empty cell).
+
+        Returns:
+            tuple[int, int]: the move that was made.
+        """
         if player is None:
             player = self.player
 
@@ -86,6 +137,17 @@ class HexStateManager(StateManager):
     # Should make it possible to feed to convolutional neural network with 5 channels, 3 for occupancy
     # and 2 for each player's turn
     def convert_to_nn_input(self):
+        """Converts the game state to the input format of the convolutional neural network. 
+        The 5 channels represent the game state as bitboards:
+        Channel 1 is the cells occupied by player 1.
+        Channel 2 is the cells occupied by player 2.
+        Channel 3 is the cells currently unoccupied.
+        Channel 4 are all 1's if the current player is 1.
+        Channel 5 are all 1's if the current player is 2.
+
+        Returns:
+            np.ndarray: the nn input of shape (0, board_size, board_size, 5),
+        """
         nn_input = np.zeros(
             shape=(self.board_size, self.board_size, 5), dtype=np.int8)
 
@@ -107,6 +169,19 @@ class HexStateManager(StateManager):
         return nn_input
 
     def convert_to_diamond_shape(self):
+        """Converts the game state to a diamond shape, which is the input format for displaying the board.
+        In effect, this rotates the board 45 degrees clockwise.
+
+        Example:
+        [[1],
+        [1, 2],
+        [1, 2, 3],
+        [1, 2],
+        [1]]
+
+        Returns:
+            list: the converted board state.
+        """
         diamond_array = []
         for i in range(-self.board_size + 1, self.board_size):
             diamond_array.append(np.diagonal(
@@ -115,9 +190,27 @@ class HexStateManager(StateManager):
         return diamond_array
 
     def _is_within_bounds(self, row, col):
+        """Ensures that the current row and column are within the bounds of the board.
+
+        Args:
+            row (int): the row index.
+            col (int): the column index.
+
+        Returns:
+            bool: true if within bounds, false if not.
+        """
         return row >= 0 and row < self.board_size and col >= 0 and col < self.board_size
 
     def _expand_neighbors(self, node, player=None):
+        """Finds neighbors that connect to the current node. Used to determine if the state is terminal (game over).
+
+        Args:
+            node (HexCell): the hexcell to expand neighbors to.
+            player (tuple[int, int]), optional): _description_. Defaults to None.
+
+        Returns:
+            list[HexCell]: the neighbors that connect.
+        """
         if player is None:
             player = self.player
 
@@ -135,6 +228,14 @@ class HexStateManager(StateManager):
         return neighbors
 
     def generate_child_states(self, player=None):
+        """Generates all the possible child state of the current state of the game.
+
+        Args:
+            player (tuple[int, int]), optional): the player that is to move. Defaults to None.
+
+        Returns:
+            zip: the child states along with what move changed it.
+        """
         if player is None:
             player = self.player
 
@@ -150,6 +251,14 @@ class HexStateManager(StateManager):
         return zip(child_states, moves)
 
     def check_winning_state(self, player=None):
+        """Checks if there is a win in the current state of the board.
+
+        Args:
+            player (tuple[int, int], optional): the player to check for win. Defaults to None.
+
+        Returns:
+            bool: true if the player has won, false if not.
+        """
         if player == (1, 0):
             return self._check_winning_state_player1()
         elif player == (0, 1):
@@ -159,6 +268,11 @@ class HexStateManager(StateManager):
 
     # Player 1 (red) is top to bottom
     def _check_winning_state_player1(self):
+        """Checks the winning state of player 1.
+
+        Returns:
+            bool: true if player 1 has won, false if not.
+        """
         nodes_to_visit = []
         nodes_visited = []
 
@@ -183,6 +297,11 @@ class HexStateManager(StateManager):
 
     # Player 2 (black) is left to right
     def _check_winning_state_player2(self):
+        """Checks the winning state of player 2.
+
+        Returns:
+            bool: true if player 2 has won, false if not.
+        """
         nodes_to_visit = []
         nodes_visited = []
 
@@ -206,6 +325,15 @@ class HexStateManager(StateManager):
         return False
 
     def has_winning_move(self, player=None):
+        """Checks if any of the child states results in a win. Useful for 
+        shortening the number of moves in each MCTS simulation.
+
+        Args:
+            player (tuple[int, int], optional): the player to check winning move for. Defaults to None.
+
+        Returns:
+            tuple[int, int]: the move that results in a win, None if there are none that results in a win.
+        """
         if player is None:
             player = self.player
 
@@ -221,4 +349,12 @@ class HexStateManager(StateManager):
         return None
 
     def get_eval(self, winner=(1, 0)):
+        """Passes the reward associated with a terminated game.
+
+        Args:
+            winner (tuple[int, int], optional): the winner of the game. Defaults to (1, 0).
+
+        Returns:
+            int: the reward that depends on which player is the winner.
+        """
         return 1 if winner == (1, 0) else -1 if winner == (0, 1) else 0

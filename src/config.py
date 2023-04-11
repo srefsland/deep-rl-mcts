@@ -1,5 +1,5 @@
 # Board config
-BOARD_SIZE = 4
+BOARD_SIZE = 7
 
 # MCTS config
 NUM_EPISODES = 200
