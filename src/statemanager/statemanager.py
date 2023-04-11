@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
-
+# Abstract class that is useful to check that the state manager is not specific to only Hex.
+# HexStateManager implements these abstract methods.
 class StateManager(ABC):
     @abstractmethod
     def check_winning_state(self, player):

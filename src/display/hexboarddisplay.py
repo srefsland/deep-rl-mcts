@@ -18,22 +18,34 @@ class HexBoardDisplay(GameBoardDisplay):
         self.ax = self.fig.add_subplot(111)
 
     def display_board(self, board, delay=0, winner=None, newest_move=None):
+        """Displays the current state of the hex board.
+
+        Args:
+            board (list): the diamond shaped board state.
+            delay (int, optional): pauses the execution to update the display. Defaults to 0.
+            winner (tuple[int, int], optional): winner of the current state if there is one. Defaults to None.
+            newest_move (tuple[int, int]), optional): the move played that lead to updating the display. Defaults to None.
+        """
         self.ax.clear()
         self.ax.set_axis_off()
 
         # Board is reversed because the board is drawn from the bottom left corner
         board.reverse()
 
+        # Horizontal spacing between each Hex cell.
         horizontal_spacing = (self.width/len(board)-1) * \
             (2 * self.board_skewness_factor)
+        # Vertical spacing between each Hex Cell.
         vertical_spacing = (self.height/len(board)-1)
+        # This refers to the offset factor that is use to calculate the initial position X for each new row.
         horizontal_offset_factor = (
             self.width/len(board)-1) * (self.board_skewness_factor)
 
         # TODO: Find a better way to scale the circles. This is just some
-        # random stuff I experimented with
+        # random stuff I experimented with, but should work for 3x3 to 9x9.
         circle_radius = (horizontal_spacing)**0.90 / 5
 
+        # Plots the legend that shows which color is which player.
         self.ax.plot([], [], 'o', markersize=10, color=RED,
                      label='Player 1', markeredgecolor=(0, 0, 0), markeredgewidth=1)
         self.ax.plot([], [], 'o', markersize=10, color=BLACK,
@@ -44,6 +56,7 @@ class HexBoardDisplay(GameBoardDisplay):
         # Add the legend to the plot
         self.ax.legend(loc='upper left', numpoints=1, fontsize=10)
 
+        # Initial position.
         posY = vertical_spacing / 2
 
         for i in range(len(board)):
@@ -75,27 +88,32 @@ class HexBoardDisplay(GameBoardDisplay):
                     self.ax.plot([posX, posX_bottom_left], [
                                  posY, posY_bottom_left], '-', color='black')
 
+                # Determines the color of the cell to be drawn.
                 color = RED if board[i][j].occupant == (
                     1, 0) else BLACK if board[i][j].occupant == (0, 1) else WHITE
 
+                # This just enlarges the newest node, to make it easier to see what moves are taken.
                 if newest_move is not None and newest_move == board[i][j].position:
                     self.ax.plot(posX, posY, 'o', markersize=circle_radius*1.15,
                                  markeredgecolor=(0, 0, 0),
                                  markerfacecolor=color,
                                  markeredgewidth=1.5)
+                # Normal size if not.
                 else:
                     self.ax.plot(posX, posY, 'o', markersize=circle_radius,
                                  markeredgecolor=(0, 0, 0),
                                  markerfacecolor=color,
                                  markeredgewidth=1)
-
+                # Increase X by horizontal spacing.
                 posX += horizontal_spacing
 
+            # Increase Y by vertical spacing after each row is complete.
             posY += vertical_spacing
 
         plt.title("Hex", fontsize=20)
 
         if winner is not None:
+            # Update title to the winner if there is one.
             plt.title(
                 f'The winner is player {1 if winner == (1, 0) else 2}', fontsize=20)
             plt.draw()

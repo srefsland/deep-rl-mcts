@@ -8,13 +8,28 @@ class ReplayBuffer:
         self.replay_buffer = deque(maxlen=maxlen)
 
     def clear(self):
+        """Clears the replay buffer, removing all the cases.
+        """
         self.replay_buffer.clear()
 
     # A case should be a game state (root state of current game) combined with the target distribution D, derived from MCTS simulations
     def add_case(self, case):
+        """Adds a case, which consists of a root state and a distribution for all moves.
+
+        Args:
+            case (tuple[np.ndarray, np.ndarray]): the root state and distribution.
+        """
         self.replay_buffer.append(case)
 
     def get_random_minibatch(self, batch_size):
+        """Fetches a random minibatch from the replay buffer.
+
+        Args:
+            batch_size (int): the size to sample from.
+
+        Returns:
+            tuple[int, int]: the training samples along with the target distributions.
+        """
         cases = self.replay_buffer
         batch_size = min(batch_size, len(cases))
 

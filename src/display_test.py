@@ -3,6 +3,8 @@ from statemanager.hexstatemanager import HexStateManager
 from nn.boardgamenetcnn import BoardGameNetCNN
 import numpy as np
 
+# NOTE: this is only for testing, not part of the actual delivery, disregard this file.
+
 
 def visualize_one_game(actor1_episodes=100, actor2_episodes=50, board_size=4, random_player1=False, random_player2=False, best_move=False):
     board = HexStateManager(board_size=board_size)
