@@ -114,8 +114,8 @@ def rl_algorithm():
         X, y = replay_buf.get_random_minibatch(config.BATCH_SIZE)
 
         nn.fit(X, y)
-        if g_a > 50:
-            epsilon *= epsilon_decay
+        # if g_a > 50:
+        epsilon *= epsilon_decay
 
         if g_a % i_s == 0:
             nn.save_model(

@@ -35,7 +35,7 @@ class MCTS:
             else:
                 nn_input = node_state_copy.convert_to_nn_input()
 
-                predictions = self.default_policy.predict(nn_input)
+                predictions = self.default_policy.call(nn_input)
 
                 move = np.argmax(predictions)
                 move = (move // board_size, move % board_size)

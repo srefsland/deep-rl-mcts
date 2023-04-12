@@ -67,5 +67,20 @@ class BoardGameNetCNN:
 
         return predictions_normalized.reshape((self.board_size, self.board_size))
 
+    def call(self, X):
+        mask = X[0, :, :, 2].flatten()
+        # Convert to tensor
+        X = tf.convert_to_tensor(X)
+        prediction = self.model(X)
+
+        # Convert output to numpy array
+        prediction = prediction.numpy()
+
+        prediction_occupied_removed = prediction * mask
+        predictions_normalized = prediction_occupied_removed / \
+            np.sum(prediction_occupied_removed)
+
+        return predictions_normalized.reshape((self.board_size, self.board_size))
+
     def save_model(self, path):
         self.model.save(path)

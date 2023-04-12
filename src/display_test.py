@@ -118,10 +118,10 @@ def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random
 
 
 if __name__ == "__main__":
-    mode = 'compare'
+    mode = 'compared'
     if mode == 'compare':
-        compare_models(180, 150, 4, random_player1=False,
+        compare_models(180, 150, 3, random_player1=False,
                        random_player2=True, best_move=False)
     else:
-        visualize_one_game(150, 50, 4, random_player1=False,
-                           random_player2=True, best_move=True)
+        visualize_one_game(30, 30, 3, random_player1=True,
+                           random_player2=False, best_move=True)
