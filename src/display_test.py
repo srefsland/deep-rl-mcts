@@ -59,6 +59,52 @@ def visualize_one_game(actor1_episodes=100, actor2_episodes=50, board_size=4, ra
         board.convert_to_diamond_shape(), winner=current_player)
 
 
+def visualize_one_game2(actor1_episodes=100, actor2_episodes=50, board_size=4, random_player1=False, random_player2=False, best_move=False):
+    board = HexStateManager(board_size=board_size)
+    board_display = HexBoardDisplay()
+
+    model = BoardGameNetCNN(
+        saved_model=f"models/model_{board_size}x{board_size}_{actor1_episodes}", board_size=board_size)
+    model2 = BoardGameNetCNN(
+        saved_model=f"models/model_{board_size}x{board_size}_{actor2_episodes}", board_size=board_size)
+
+    is_terminal = False
+    while not is_terminal:
+        current_player = board.player
+
+        if current_player == (1, 0) and not random_player1:
+            model_input = board.convert_to_nn_input()
+            moves = model.predict(model_input).reshape(-1,)
+
+            if best_move:
+                move = np.argmax(moves)
+                move = (move // board_size, move % board_size)
+            else:
+                indices = np.arange(len(moves))
+
+                move = np.random.choice(indices, p=moves)
+                move = (move // board_size, move % board_size)
+
+            new_move = board.make_move(move)
+        elif current_player == (0, 1) and not random_player2:
+            x = input("Enter x: ")
+            y = input("Enter y: ")
+
+            move = (int(x), int(y))
+
+            new_move = board.make_move(move)
+        else:
+            new_move = board.make_random_move()
+
+        board_display.display_board(
+            board.convert_to_diamond_shape(), delay=0.5, newest_move=new_move)
+
+        is_terminal = board.check_winning_state(current_player)
+
+    board_display.display_board(
+        board.convert_to_diamond_shape(), winner=current_player)
+
+
 def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random_player1=False, random_player2=False, best_move=False):
     model = BoardGameNetCNN(
         saved_model=f"models/model_{board_size}x{board_size}_{actor1_episodes}", board_size=board_size)
@@ -78,7 +124,7 @@ def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random
 
             if current_player == (1, 0) and not random_player1:
                 model_input = board.convert_to_nn_input()
-                moves = model.predict(model_input).reshape(-1,)
+                moves = model.call(model_input).reshape(-1,)
 
                 if best_move:
                     move = np.argmax(moves)
@@ -92,7 +138,7 @@ def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random
                 new_move = board.make_move(move)
             elif current_player == (0, 1) and not random_player2:
                 model_input = board.convert_to_nn_input()
-                moves = model2.predict(model_input).reshape(-1,)
+                moves = model2.call(model_input).reshape(-1,)
 
                 if best_move:
                     move = np.argmax(moves)
@@ -120,8 +166,8 @@ def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random
 if __name__ == "__main__":
     mode = 'compared'
     if mode == 'compare':
-        compare_models(180, 150, 3, random_player1=False,
-                       random_player2=True, best_move=False)
+        compare_models(60, 100, 5, random_player1=False,
+                       random_player2=False, best_move=False)
     else:
-        visualize_one_game(30, 30, 3, random_player1=True,
-                           random_player2=False, best_move=True)
+        visualize_one_game(200, 100, 5, random_player1=False,
+                           random_player2=True, best_move=True)

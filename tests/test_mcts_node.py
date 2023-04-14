@@ -13,14 +13,24 @@ def setup_node():
 
 def test_expand():
     node = setup_node()
+    node.n = 11
 
     node.expand()
 
     assert len(node.children) == 16
 
 
+def test_expand_without_n():
+    node = setup_node()
+
+    node.expand()
+
+    assert node.children is None
+
+
 def test_empty_distribution():
     node = setup_node()
+    node.n = 11
     node.expand()
 
     distribution = node.get_visit_distribution()
@@ -33,6 +43,7 @@ def test_empty_distribution():
 def test_non_empty_distribution():
     root_node = setup_node()
     root_node.state.make_move((0, 3), (1, 0))
+    root_node.n = 11
     root_node.expand()
 
     for i, node in enumerate(root_node.children):

@@ -17,9 +17,10 @@ class MCTS:
             node = self.select_best_ucb(node)
 
         if not node.is_terminal():
-            node.expand()
+            expand = node.expand()
 
-            node = self.select_best_ucb(node)
+            if expand:
+                node = self.select_best_ucb(node)
 
         return node
 

@@ -13,8 +13,13 @@ class MCTSNode:
         self.move = move
 
     def expand(self):
-        self.children = np.array([MCTSNode(state=child_state, move=move, parent=self)
-                                  for child_state, move in self.state.generate_child_states()])
+        if self.n > 10:
+            self.children = np.array([MCTSNode(state=child_state, move=move, parent=self)
+                                      for child_state, move in self.state.generate_child_states()])
+            
+            return True
+        else:
+            return False
 
     def update_values(self, reward):
         self.n += 1

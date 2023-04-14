@@ -22,7 +22,7 @@ class ReplayBuffer:
         self.replay_buffer.append(case)
 
     def get_random_minibatch(self, batch_size):
-        """Fetches a random minibatch from the replay buffer.
+        """Fetches a random minibatch from the replay buffer with weighted probability.
 
         Args:
             batch_size (int): the size to sample from.
@@ -30,14 +30,21 @@ class ReplayBuffer:
         Returns:
             tuple[int, int]: the training samples along with the target distributions.
         """
-        cases = self.replay_buffer
-        batch_size = min(batch_size, len(cases))
+        cases = list(self.replay_buffer)
+        if batch_size >= len(cases):
+            minibatch = cases
+        else:
+            # Calculate weights based on position in deque
+            weights = np.linspace(0, 1, len(cases))
+            # Normalize the weights so that they sum to 1
+            weights /= weights.sum()
 
-        row_idx = np.random.choice(len(cases), size=batch_size, replace=False)
-        minibatch = [cases[i] for i in row_idx]
+            # Sample cases using weighted probability, idea is to sample more recent cases more often
+            row_idx = np.random.choice(len(cases), size=batch_size, replace=False, p=weights)
+            minibatch = [cases[i] for i in row_idx]
 
         X = np.concatenate([x.astype(np.float32)
-                           for x, _ in minibatch], axis=0)
+                        for x, _ in minibatch], axis=0)
         y = np.concatenate([y for _, y in minibatch], axis=0)
 
         return X, y

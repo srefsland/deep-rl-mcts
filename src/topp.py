@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from nn.boardgamenetcnn import BoardGameNetCNN
 from actor import Actor
 from display.hexboarddisplay import HexBoardDisplay
+import config
 
 
 hexboard_display = HexBoardDisplay()
@@ -28,10 +29,11 @@ def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
         actor2_wins = 0
 
         for i in range(num_games):
+            display_game = i == num_games - 1
             if i % 2 == 0:
                 # Display the last game of every series.
                 winner = run_game(
-                    actor1, actor2, board_size=board_size, temperature=temperature, display_game=i == num_games - 1)
+                    actor1, actor2, board_size=board_size, temperature=temperature, display_game=display_game)
 
                 if winner == (1, 0):
                     actor1_wins += 1
@@ -40,7 +42,7 @@ def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
             else:
                 # Display the last game of every series.
                 winner = run_game(
-                    actor2, actor1, board_size=board_size, temperature=temperature, display_game=i == num_games - 1)
+                    actor2, actor1, board_size=board_size, temperature=temperature, display_game=display_game)
 
                 if winner == (1, 0):
                     actor2_wins += 1
@@ -49,7 +51,8 @@ def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
 
         agent_wins[actor1.name] += actor1_wins
         agent_wins[actor2.name] += actor2_wins
-        print(f"{actor1.name} vs {actor2.name}: {actor1_wins} - {actor2_wins}")
+        if config.TOPP_VERBOSE:
+            print(f"{actor1.name} vs {actor2.name}: {actor1_wins} - {actor2_wins}")
 
     # Display bar plot for each agent wins
     plt.bar(agent_wins.keys(), agent_wins.values())
@@ -69,6 +72,7 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
         tuple[int, int]: the winner of the game
     """
     board = HexStateManager(board_size=board_size)
+    display_game = False
 
     is_terminal = False
     while not is_terminal:
@@ -96,7 +100,7 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
 
 
 if __name__ == "__main__":
-    board_size = 4
+    board_size = 5
     model = BoardGameNetCNN(
         saved_model=f"models/model_{board_size}x{board_size}_0", board_size=board_size)
     model2 = BoardGameNetCNN(
@@ -108,11 +112,11 @@ if __name__ == "__main__":
     model5 = BoardGameNetCNN(
         saved_model=f"models/model_{board_size}x{board_size}_180", board_size=board_size)
 
-    # agent1 = Actor("model_0", model, board_size=board_size)
+    agent1 = Actor("model_0", model, board_size=board_size)
     agent2 = Actor("model_50", model2, board_size=board_size)
     agent3 = Actor("model_100", model3, board_size=board_size)
     agent4 = Actor("model_150", model4, board_size=board_size)
     agent5 = Actor("model_200", model5, board_size=board_size)
 
-    run_tournament([agent2, agent3, agent4, agent5],
-                   board_size=board_size, temperature=0.8)
+    run_tournament([agent1, agent2, agent3, agent4, agent5], num_games=config.NUM_GAMES_TOPP,
+                   board_size=board_size, temperature=0.5)

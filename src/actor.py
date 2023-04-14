@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Actor():
+class Actor:
     """The actor class is used to make moves from trained neural networks.
     """
 
@@ -56,13 +56,13 @@ class Actor():
             tuple[int, int]: the move taken.
         """
         if np.random.random() < temperature:
-            moves = self.model.predict(model_input).reshape(-1,)
+            moves = self.model.call(model_input).reshape(-1,)
 
             indices = np.arange(len(moves))
 
             move = np.random.choice(indices, p=moves)
         else:
-            moves = self.model.predict(model_input).reshape(-1,)
+            moves = self.model.call(model_input).reshape(-1,)
 
             move = np.argmax(moves)
 

@@ -11,6 +11,7 @@ from tqdm import tqdm
 import time
 import os
 import gc
+import logging
 
 import threading
 from concurrent.futures import ThreadPoolExecutor
@@ -32,6 +33,9 @@ def parallel_tree_search(mcts_tree, epsilon, lock, counter):
 
 
 def rl_algorithm():
+    # Configure logging level and format for console output
+    logging.basicConfig(level=logging.DEBUG,
+                        format='%(asctime)s - %(levelname)s - %(message)s')
     # profiler = cProfile.Profile()
     # profiler.enable()
     # display = HexBoardDisplay()
@@ -50,7 +54,7 @@ def rl_algorithm():
     replay_buf.clear()
 
     for g_a in tqdm(range(config.NUM_EPISODES + 1)):
-        print(f"Game {g_a}")
+        logging.info(f"Game {g_a}")
         root_state = HexStateManager(config.BOARD_SIZE)
 
         mcts_tree = MCTS(root_state=root_state, default_policy=nn,
@@ -83,7 +87,7 @@ def rl_algorithm():
 
                 # with ThreadPoolExecutor() as executor:
                 #     futures = [executor.submit(parallel_tree_search, mcts_tree, epsilon,
-                #                                lock, counter) for _ in range(min(os.cpu_count(), 6))]
+                #                                lock, counter) for _ in range(min(os.cpu_count(), 4))]
 
                 #     # Wait for all the futures to complete execution
                 #     for future in futures:
@@ -128,5 +132,5 @@ def rl_algorithm():
 
 if __name__ == "__main__":
     rl_algorithm()
-    stats = pstats.Stats("mcts_simulation_stats.prof")
-    stats.strip_dirs().sort_stats("cumtime").print_stats("boardgamenetcnn.py")
+    # stats = pstats.Stats("mcts_simulation_stats.prof")
+    # stats.strip_dirs().sort_stats("cumtime").print_stats("boardgamenetcnn.py")
