@@ -5,12 +5,9 @@ from display.hexboarddisplay import HexBoardDisplay
 import config
 import replay_buffer
 
-import cProfile
-import pstats
 from tqdm import tqdm
 import time
 import os
-import gc
 import logging
 
 import threading
@@ -19,7 +16,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 def parallel_tree_search(mcts_tree, epsilon, lock, counter):
     start_time = time.time()
-    while time.time() - start_time < 1 or counter[0] < 200:
+    while time.time() - start_time < 1 or counter[0] < config.MCTS_MIN_SIMULATIONS:
         with lock:
             node = mcts_tree.tree_search()
 
@@ -36,13 +33,10 @@ def rl_algorithm():
     # Configure logging level and format for console output
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s - %(levelname)s - %(message)s')
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-    # display = HexBoardDisplay()
 
     epsilon = config.EPSILON
     epsilon_decay = config.EPSILON_DECAY
-    replay_buf = replay_buffer.ReplayBuffer()
+    replay_buf = replay_buffer.ReplayBuffer(maxlen=config.REPLAY_BUFFER_SIZE)
     nn = BoardGameNetCNN(config.NEURAL_NETWORK_DIMENSIONS,
                          config.LEARNING_RATE,
                          config.ACTIVATION_FUNCTION,
@@ -61,54 +55,67 @@ def rl_algorithm():
                          c=config.MTCS_C, verbose=config.MCTS_VERBOSE)
         s = mcts_tree.root
 
-        winning_move = None
+        winning_moves = None
 
         moves = 0
         while not s.state.check_winning_state():
-            winning_move = None
+            winning_moves = None
             # Check winning state, to end episode early
             if moves > (config.BOARD_SIZE - 1) * 2 - 1:
-                winning_move = s.state.has_winning_move()
+                winning_moves = s.state.has_winning_move()
 
             print(f"Move {moves}")
-            if config.MCTS_DYNAMIC_SIMS and winning_move is None:
-                start_time = time.time()
-                i = 0
+            if config.MCTS_DYNAMIC_SIMS and winning_moves is None:
+                if config.MULTITHREAD_RL:
+                    counter = [0]
+                    lock = threading.Lock()
 
-                while time.time() - start_time < 1 or i < config.MCTS_MIN_SIMULATIONS:
-                    i += 1
-                    node = mcts_tree.tree_search()
-                    reward = mcts_tree.leaf_evaluation(node, epsilon)
-                    mcts_tree.backpropagation(node, reward)
+                    with ThreadPoolExecutor() as executor:
+                        futures = [executor.submit(parallel_tree_search, mcts_tree, epsilon,
+                                                   lock, counter) for _ in range(min(os.cpu_count(), 4))]
 
-                print(f"Number of simulations: {i}")
-                # counter = [0]
-                # lock = threading.Lock()
+                        # Wait for all the futures to complete execution
+                        for future in futures:
+                            future.result()
 
-                # with ThreadPoolExecutor() as executor:
-                #     futures = [executor.submit(parallel_tree_search, mcts_tree, epsilon,
-                #                                lock, counter) for _ in range(min(os.cpu_count(), 4))]
+                    print(f"Number of simulations: {counter[0]}")
+                else:
+                    start_time = time.time()
+                    i = 0
 
-                #     # Wait for all the futures to complete execution
-                #     for future in futures:
-                #         future.result()
+                    while time.time() - start_time < 1 or i < config.MCTS_MIN_SIMULATIONS:
+                        i += 1
+                        node = mcts_tree.tree_search()
+                        reward = mcts_tree.leaf_evaluation(node, epsilon)
+                        mcts_tree.backpropagation(node, reward)
 
-                # print(f"Number of simulations: {counter[0]}")
+                    print(f"Number of simulations: {i}")
             else:
-                for g_s in range(config.MTCS_SIMULATIONS + 1):
+                for _ in range(config.MTCS_SIMULATIONS + 1):
                     node = mcts_tree.tree_search()
                     reward = mcts_tree.leaf_evaluation(node, epsilon)
                     mcts_tree.backpropagation(node, reward)
 
             moves += 1
-            if winning_move is not None:
-                print(f"Winning move: {winning_move}")
-            D = mcts_tree.get_visit_distribution(
-            ) if winning_move is None else mcts_tree.get_winning_distribution(winning_move)
+            if winning_moves is not None:
+                print(f"Winning moves: {winning_moves}")
+
+            distribution = (
+                mcts_tree.get_winning_distribution(winning_moves)
+                if winning_moves is not None
+                else mcts_tree.get_visit_distribution()
+            )
+
             replay_buf.add_case(
-                (mcts_tree.root.state.convert_to_nn_input(), D))
-            s = mcts_tree.select_best_distribution(
-            ) if winning_move is None else mcts_tree.select_winning_move(winning_move)
+                (mcts_tree.root.state.convert_to_nn_input(), distribution))
+
+            s = (
+                mcts_tree.select_winning_move(winning_moves[0])
+                if winning_moves is not None
+                else mcts_tree.select_best_distribution()
+            )
+            if winning_moves is not None and len(winning_moves) > 1:
+                pass
             # if config.DISPLAY_GAME_RL:
             #    display.display_board(s.state.convert_to_diamond_shape(
             #
@@ -118,19 +125,12 @@ def rl_algorithm():
         X, y = replay_buf.get_random_minibatch(config.BATCH_SIZE)
 
         nn.fit(X, y)
-        # if g_a > 50:
         epsilon *= epsilon_decay
 
         if g_a % i_s == 0:
             nn.save_model(
                 f"models/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{g_a}")
 
-    # profiler.disable()
-    # stats_filename = "mcts_simulation_stats.prof"
-    # profiler.dump_stats(stats_filename)
-
 
 if __name__ == "__main__":
     rl_algorithm()
-    # stats = pstats.Stats("mcts_simulation_stats.prof")
-    # stats.strip_dirs().sort_stats("cumtime").print_stats("boardgamenetcnn.py")

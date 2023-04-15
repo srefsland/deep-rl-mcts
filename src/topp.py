@@ -54,8 +54,13 @@ def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
         if config.TOPP_VERBOSE:
             print(f"{actor1.name} vs {actor2.name}: {actor1_wins} - {actor2_wins}")
 
+    total_games = sum(agent_wins.values())
+    win_percentage = {agent: wins /
+                      total_games for agent, wins in agent_wins.items()}
+    plt.figure()
     # Display bar plot for each agent wins
-    plt.bar(agent_wins.keys(), agent_wins.values())
+    plt.title(f"TOPP Tournament {board_size}x{board_size} Win Percentages (%)")
+    plt.bar(win_percentage.keys(), win_percentage.values())
     plt.show()
 
 
@@ -72,7 +77,6 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
         tuple[int, int]: the winner of the game
     """
     board = HexStateManager(board_size=board_size)
-    display_game = False
 
     is_terminal = False
     while not is_terminal:
@@ -92,7 +96,7 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
         if display_game:
             winner = current_player if is_terminal else None
             hexboard_display.display_board(
-                board.convert_to_diamond_shape(), delay=0.4, newest_move=move, winner=winner)
+                board.convert_to_diamond_shape(), delay=0.3, newest_move=move, winner=winner, actor1=actor1.name, actor2=actor2.name)
 
     winner = current_player
 
@@ -100,23 +104,16 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
 
 
 if __name__ == "__main__":
-    board_size = 5
-    model = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_0", board_size=board_size)
-    model2 = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_50", board_size=board_size)
-    model3 = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_100", board_size=board_size)
-    model4 = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_150", board_size=board_size)
-    model5 = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_180", board_size=board_size)
+    save_interval = config.NUM_EPISODES // (config.TOPP_M - 1)
 
-    agent1 = Actor("model_0", model, board_size=board_size)
-    agent2 = Actor("model_50", model2, board_size=board_size)
-    agent3 = Actor("model_100", model3, board_size=board_size)
-    agent4 = Actor("model_150", model4, board_size=board_size)
-    agent5 = Actor("model_200", model5, board_size=board_size)
+    agents = []
+    for i in range(config.TOPP_M):
+        print(
+            f"Loading model {i * save_interval} {config.BOARD_SIZE}x{config.BOARD_SIZE} from {config.MODEL_DIR}")
+        model = BoardGameNetCNN(
+            saved_model=f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{i * save_interval}", board_size=config.BOARD_SIZE)
+        agents.append(
+            Actor(f"model_{i * save_interval}", model, board_size=config.BOARD_SIZE))
 
-    run_tournament([agent1, agent2, agent3, agent4, agent5], num_games=config.NUM_GAMES_TOPP,
-                   board_size=board_size, temperature=0.5)
+    run_tournament(agents, num_games=config.TOPP_NUM_GAMES,
+                   board_size=config.BOARD_SIZE, temperature=config.TOPP_TEMPERATURE)

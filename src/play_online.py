@@ -3,8 +3,10 @@ from actor import Actor
 from nn.boardgamenetcnn import BoardGameNetCNN
 
 board_size = 7
+model_dir = "models"
+model_eps = 160
 model = BoardGameNetCNN(
-    saved_model=f"cached_models/model_{board_size}x{board_size}_{50}", board_size=board_size)
+    saved_model=f"{model_dir}/model_{board_size}x{board_size}_{model_eps}", board_size=board_size)
 hex_actor = Actor('hex_actor', model, board_size=board_size)
 
 

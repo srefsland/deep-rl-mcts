@@ -325,28 +325,29 @@ class HexStateManager(StateManager):
         return False
 
     def has_winning_move(self, player=None):
-        """Checks if any of the child states results in a win. Useful for 
+        """Checks if some of the child states results in a win. Useful for 
         shortening the number of moves in each MCTS simulation.
 
         Args:
             player (tuple[int, int], optional): the player to check winning move for. Defaults to None.
 
         Returns:
-            tuple[int, int]: the move that results in a win, None if there are none that results in a win.
+            list[tuple[int, int]]: the moves that results in a win, None if there are none that results in a win.
         """
         if player is None:
             player = self.player
 
         moves = self.get_moves_legal()
+        winning_moves = []
 
         for move in moves:
             child_board = self.copy_state()
             child_board.make_move(move, player)
 
             if child_board.check_winning_state(player):
-                return move
+                winning_moves.append(move)
 
-        return None
+        return None if len(winning_moves) == 0 else winning_moves
 
     def get_eval(self, winner=(1, 0)):
         """Passes the reward associated with a terminated game.

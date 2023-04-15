@@ -190,10 +190,10 @@ poetry.toml
 .ionide
 .vscode
 
-models/
+models*
 models_cnn/
 cached_models/
-models_5x5_topp/
+models_5x5_topp*/
 
 mcts_simulation_stats.prof
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode

@@ -17,7 +17,7 @@ class HexBoardDisplay(GameBoardDisplay):
             figsize=(width*board_skewness_factor*PX, height*PX), num="Hex")
         self.ax = self.fig.add_subplot(111)
 
-    def display_board(self, board, delay=0, winner=None, newest_move=None):
+    def display_board(self, board, delay=0, winner=None, newest_move=None, actor1=None, actor2=None):
         """Displays the current state of the hex board.
 
         Args:
@@ -45,11 +45,13 @@ class HexBoardDisplay(GameBoardDisplay):
         # random stuff I experimented with, but should work for 3x3 to 9x9.
         circle_radius = (horizontal_spacing)**0.90 / 5
 
+        player1 = "Player 1" if actor1 is None else actor1
+        player2 = "Player 2" if actor2 is None else actor2
         # Plots the legend that shows which color is which player.
         self.ax.plot([], [], 'o', markersize=10, color=RED,
-                     label='Player 1', markeredgecolor=(0, 0, 0), markeredgewidth=1)
+                     label=player1, markeredgecolor=(0, 0, 0), markeredgewidth=1)
         self.ax.plot([], [], 'o', markersize=10, color=BLACK,
-                     label='Player 2', markeredgecolor=(0, 0, 0), markeredgewidth=1)
+                     label=player2, markeredgecolor=(0, 0, 0), markeredgewidth=1)
         self.ax.plot([], [], 'o', markersize=10, color=WHITE,
                      label='Unoccupied', markeredgecolor=(0, 0, 0), markeredgewidth=1)
 

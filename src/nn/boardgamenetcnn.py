@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 
 from . import nn_options
+import warnings
 
 
 class BoardGameNetCNN:
@@ -77,9 +78,17 @@ class BoardGameNetCNN:
         prediction = prediction.numpy()
 
         prediction_occupied_removed = prediction * mask
-        predictions_normalized = prediction_occupied_removed / \
-            np.sum(prediction_occupied_removed)
 
+        sum_prediction = np.sum(prediction_occupied_removed)
+        # If the sum of the prediction is zero, then the mask is used as a fallback
+        # to still return a valid move. This can happen when the model predicts something
+        # to be zero.
+        if sum_prediction == 0:
+            prediction_occupied_removed = mask
+            predictions_normalized = prediction_occupied_removed / \
+                np.sum(prediction_occupied_removed)
+        else:
+            predictions_normalized = prediction_occupied_removed / sum_prediction
         return predictions_normalized.reshape((self.board_size, self.board_size))
 
     def save_model(self, path):

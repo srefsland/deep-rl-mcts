@@ -16,7 +16,7 @@ class MCTSNode:
         if self.n > 10:
             self.children = np.array([MCTSNode(state=child_state, move=move, parent=self)
                                       for child_state, move in self.state.generate_child_states()])
-            
+
             return True
         else:
             return False
@@ -50,11 +50,15 @@ class MCTSNode:
             visit_distribution.flatten(), axis=0)
         return visit_distribution
 
-    def get_winning_distribution(self, move):
+    def get_winning_distribution(self, moves):
         visit_distribution = np.zeros(
             (self.state.board_size, self.state.board_size))
 
-        visit_distribution[move[0], move[1]] = 1
+        for move in moves:
+            visit_distribution[move[0], move[1]] = 1
+
+        # Normalize to 1
+        visit_distribution = visit_distribution / np.sum(visit_distribution)
 
         visit_distribution = np.expand_dims(
             visit_distribution.flatten(), axis=0)
