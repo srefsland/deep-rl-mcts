@@ -1,10 +1,12 @@
 from itertools import combinations
-from statemanager.hexstatemanager import HexStateManager
+
 import matplotlib.pyplot as plt
-from nn.boardgamenetcnn import BoardGameNetCNN
+
+import config
 from actor import Actor
 from display.hexboarddisplay import HexBoardDisplay
-import config
+from nn.boardgamenetcnn import BoardGameNetCNN
+from statemanager.hexstatemanager import HexStateManager
 
 
 def run_tournament(actors, state_manager, display, num_games=25, board_size=4, temperature=1.0):

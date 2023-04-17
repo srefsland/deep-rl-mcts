@@ -1,7 +1,8 @@
-from oht.ActorClient import ActorClient
+import numpy as np
+
 from actor import Actor
 from nn.boardgamenetcnn import BoardGameNetCNN
-import numpy as np
+from oht.ActorClient import ActorClient
 
 board_size = 7
 model_dir = "models"

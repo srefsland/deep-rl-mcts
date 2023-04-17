@@ -1,17 +1,25 @@
-from mcts.mcts import MCTS
-from statemanager.hexstatemanager import HexStateManager
-from nn.boardgamenetcnn import BoardGameNetCNN
-from nn.boardgamenetann import BoardGameNetANN
-from display.hexboarddisplay import HexBoardDisplay
-import config
-import replay_buffer
+import logging
+import time
 
 from tqdm import tqdm
-import time
-import logging
+
+import config
+import replay_buffer
+from display.hexboarddisplay import HexBoardDisplay
+from mcts.mcts import MCTS
+from nn.boardgamenetann import BoardGameNetANN
+from nn.boardgamenetcnn import BoardGameNetCNN
+from statemanager.hexstatemanager import HexStateManager
 
 
 def rl_algorithm(nn, state_manager, display):
+    """The reinforcement learning algorithm.
+
+    Args:
+        nn: the neural network class to use.
+        state_manager (StateManager): the state manager class to use.
+        display (GameBoardDisplay): game board display class to use.
+    """
     # Configure logging level and format for console output
     logging.basicConfig(level=logging.DEBUG,
                         format='%(asctime)s - %(levelname)s - %(message)s')

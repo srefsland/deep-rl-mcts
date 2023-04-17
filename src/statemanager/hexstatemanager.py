@@ -305,6 +305,14 @@ class HexStateManager(StateManager):
         return 1 if winner == (1, 0) else -1 if winner == (0, 1) else 0
 
     def get_visit_distribution(self, node):
+        """Gets the visit distribution of the children of the node it terms of nsa counts.
+
+        Args:
+            node (MCTSNode): the node associated with the current state.
+
+        Returns:
+            np.ndarray: the visit distribution.
+        """
         visit_distribution = np.zeros((self.board_size, self.board_size))
 
         for child in node.children:
@@ -320,6 +328,14 @@ class HexStateManager(StateManager):
         return visit_distribution
 
     def get_winning_distribution(self, winning_moves):
+        """Gets the winning distribution if there are winning moves.
+
+        Args:
+            winning_moves (list(tuple[int, int])): the list of winning move(s).
+
+        Returns:
+            np.ndarray: the winning distribution.
+        """
         visit_distribution = np.zeros((self.board_size, self.board_size))
 
         for move in winning_moves:

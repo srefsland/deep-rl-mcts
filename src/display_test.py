@@ -1,9 +1,10 @@
-from display.hexboarddisplay import HexBoardDisplay
-from statemanager.hexstatemanager import HexStateManager
-from nn.boardgamenetcnn import BoardGameNetCNN
 import matplotlib.pyplot as plt
 import numpy as np
+
 from actor import Actor
+from display.hexboarddisplay import HexBoardDisplay
+from nn.boardgamenetcnn import BoardGameNetCNN
+from statemanager.hexstatemanager import HexStateManager
 
 # NOTE: this is only for testing, not part of the actual delivery, disregard this file.
 

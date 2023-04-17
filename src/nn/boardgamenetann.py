@@ -29,6 +29,8 @@ class BoardGameNetANN:
             self.model = tf.keras.models.load_model(saved_model)
 
     def _build_model(self):
+        """Builds the neural network model.
+        """
         self.model = tf.keras.models.Sequential()
         input_shape = (self.board_size**2 + 1,)
 
@@ -44,10 +46,27 @@ class BoardGameNetANN:
         self.model.compile(optimizer=self.optimizer, loss=self.loss)
 
     def fit(self, X, y, epochs=10, batch_size=32):
+        """Fits the model.
+
+        Args:
+            X (np.ndarray): the training data (game states).
+            y (np.ndarray): the target distribution.
+            epochs (int, optional): number of epochs in training. Defaults to 10.
+            batch_size (int, optional): the batch size. Defaults to 32.
+        """
         self.model.fit(X, y, validation_split=0.2,
                        epochs=epochs, batch_size=batch_size)
 
     def predict_best_move(self, state=None, model_input=None):
+        """Predicts the best move given the model input.
+
+        Args:
+            state (StateManager, optional): the state of the game. Defaults to None.
+            model_input (np.ndarray, optional): the raw model input. Defaults to None.
+
+        Returns:
+            tuple[int, int]: the move to choose
+        """
         nn_input = self.convert_to_nn_input(
             state) if model_input is None else model_input
         predictions = self.call(nn_input)
@@ -58,6 +77,15 @@ class BoardGameNetANN:
         return move
 
     def predict_probabilistic_move(self, state=None, model_input=None):
+        """Predicts the move according to the probability distribution given by the model.
+
+        Args:
+            state (StateManager, optional): the state of the game. Defaults to None.
+            model_input (np.ndarray, optional): the raw model input. Defaults to None.
+
+        Returns:
+            tuple[int, int]: the move to choose
+        """
         nn_input = self.convert_to_nn_input(
             state) if model_input is None else model_input
 
@@ -70,6 +98,15 @@ class BoardGameNetANN:
         return move
 
     def call(self, X):
+        """Predicts the output of the neural network given the input.
+        Uses the __call__ method of the model, which is faster than using the predict method.
+
+        Args:
+            X (np.ndarray): the input to the neural network
+
+        Returns:
+            np.ndarray: the predictions for each cell
+        """
         mask = (X[0, 1:] == 0).astype(int)
         # Convert to tensor
         X = tf.convert_to_tensor(X)

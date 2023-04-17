@@ -1,9 +1,11 @@
-import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.use('Qt5Agg')
+import matplotlib.pyplot as plt
+import numpy as np
 
 from .gameboarddisplay import GameBoardDisplay
-import numpy as np
+
+matplotlib.use('Qt5Agg')
+
 
 BLACK = (0, 0, 0)
 RED = (1, 0, 0)
