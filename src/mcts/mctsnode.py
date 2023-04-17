@@ -33,36 +33,5 @@ class MCTSNode:
     def is_terminal(self):
         return self.state.check_winning_state()
 
-    def get_visit_distribution(self):
-        visit_distribution = np.zeros(
-            (self.state.board_size, self.state.board_size))
-
-        for child in self.children:
-            visit_distribution[child.move[0],
-                               child.move[1]] = child.nsa
-
-        # Avoid division by zero
-        if np.sum(visit_distribution) > 0:
-            visit_distribution = visit_distribution / \
-                np.sum(visit_distribution)
-
-        visit_distribution = np.expand_dims(
-            visit_distribution.flatten(), axis=0)
-        return visit_distribution
-
-    def get_winning_distribution(self, moves):
-        visit_distribution = np.zeros(
-            (self.state.board_size, self.state.board_size))
-
-        for move in moves:
-            visit_distribution[move[0], move[1]] = 1
-
-        # Normalize to 1
-        visit_distribution = visit_distribution / np.sum(visit_distribution)
-
-        visit_distribution = np.expand_dims(
-            visit_distribution.flatten(), axis=0)
-        return visit_distribution
-
     def is_root(self):
         return self.parent is None

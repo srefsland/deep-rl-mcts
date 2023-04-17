@@ -1,6 +1,9 @@
 import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('Qt5Agg')
 
 from .gameboarddisplay import GameBoardDisplay
+import numpy as np
 
 BLACK = (0, 0, 0)
 RED = (1, 0, 0)
@@ -17,11 +20,11 @@ class HexBoardDisplay(GameBoardDisplay):
             figsize=(width*board_skewness_factor*PX, height*PX), num="Hex")
         self.ax = self.fig.add_subplot(111)
 
-    def display_board(self, board, delay=0, winner=None, newest_move=None, actor1=None, actor2=None):
+    def display_board(self, state, delay=0, winner=None, newest_move=None, actor1=None, actor2=None):
         """Displays the current state of the hex board.
 
         Args:
-            board (list): the diamond shaped board state.
+            state (list): current game state.
             delay (int, optional): pauses the execution to update the display. Defaults to 0.
             winner (tuple[int, int], optional): winner of the current state if there is one. Defaults to None.
             newest_move (tuple[int, int]), optional): the move played that lead to updating the display. Defaults to None.
@@ -29,8 +32,7 @@ class HexBoardDisplay(GameBoardDisplay):
         self.ax.clear()
         self.ax.set_axis_off()
 
-        # Board is reversed because the board is drawn from the bottom left corner
-        board.reverse()
+        board = self._convert_to_display_shape(state.board)
 
         # Horizontal spacing between each Hex cell.
         horizontal_spacing = (self.width/len(board)-1) * \
@@ -123,4 +125,27 @@ class HexBoardDisplay(GameBoardDisplay):
 
         # If the delay is greater than 0, it means we want to update the display, and if not we want to only show one display
         if delay > 0:
+            plt.draw()
             plt.pause(delay)
+
+    def _convert_to_display_shape(self, board):
+        """Converts the game state to a diamond shape, which is the input format for displaying the board.
+        In effect, this rotates the board 45 degrees clockwise.
+
+        Example:
+        [[1],
+        [1, 2],
+        [1, 2, 3],
+        [1, 2],
+        [1]]
+
+        Returns:
+            list: the converted board state.
+        """
+        board_size = len(board)
+        diamond_array = []
+        board = np.flipud(board)
+        for i in range(board_size - 1, -board_size, -1):
+            diamond_array.append(np.diagonal(board, i).tolist())
+
+        return diamond_array

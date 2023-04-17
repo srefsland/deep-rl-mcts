@@ -2,6 +2,8 @@ from abc import ABC, abstractmethod
 
 # Abstract class that is useful to check that the state manager is not specific to only Hex.
 # HexStateManager implements these abstract methods.
+
+
 class StateManager(ABC):
     @abstractmethod
     def check_winning_state(self, player):
@@ -28,5 +30,13 @@ class StateManager(ABC):
         pass
 
     @abstractmethod
-    def convert_to_nn_input(self, model_type):
+    def get_visit_distribution(self, node):
         pass
+
+    @abstractmethod
+    def get_winning_distribution(self, winning_moves):
+        pass
+
+    @abstractmethod
+    def get_winning_moves(self, player):
+        self

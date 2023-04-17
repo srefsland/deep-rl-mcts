@@ -1,76 +1,53 @@
 from display.hexboarddisplay import HexBoardDisplay
 from statemanager.hexstatemanager import HexStateManager
 from nn.boardgamenetcnn import BoardGameNetCNN
+import matplotlib.pyplot as plt
 import numpy as np
+from actor import Actor
 
 # NOTE: this is only for testing, not part of the actual delivery, disregard this file.
 
 
-def visualize_one_game(actor1_episodes=100, actor2_episodes=50, board_size=4, random_player1=False, random_player2=False, best_move=False):
+def visualize_one_game(actor1=None, actor2=None, board_size=4, best_move=False):
     board = HexStateManager(board_size=board_size)
     board_display = HexBoardDisplay()
-
-    model = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_{actor1_episodes}", board_size=board_size)
-    model2 = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_{actor2_episodes}", board_size=board_size)
 
     is_terminal = False
     while not is_terminal:
         current_player = board.player
 
-        if current_player == (1, 0) and not random_player1:
-            model_input = board.convert_to_nn_input()
-            moves = model.predict(model_input).reshape(-1,)
-
+        if current_player == (1, 0) and actor1 is not None:
             if best_move:
-                move = np.argmax(moves)
-                move = (move // board_size, move % board_size)
+                move = actor1.predict_move(board, temperature=1.0)
             else:
-                indices = np.arange(len(moves))
-
-                move = np.random.choice(indices, p=moves)
-                move = (move // board_size, move % board_size)
+                move = actor1.predict_move(board, temperature=0)
 
             new_move = board.make_move(move)
-        elif current_player == (0, 1) and not random_player2:
-            model_input = board.convert_to_nn_input()
-            moves = model2.predict(model_input).reshape(-1,)
-
+        elif current_player == (0, 1) and actor2 is not None:
             if best_move:
-                move = np.argmax(moves)
-                move = (move // board_size, move % board_size)
+                move = actor2.predict_move(board, temperature=1.0)
             else:
-                indices = np.arange(len(moves))
-
-                move = np.random.choice(indices, p=moves)
-                move = (move // board_size, move % board_size)
+                move = actor2.predict_move(board, temperature=0)
 
             new_move = board.make_move(move)
         else:
             new_move = board.make_random_move()
 
-        board_display.display_board(
-            board.convert_to_diamond_shape(), delay=0.5, newest_move=new_move)
+        board_display.display_board(board, delay=0.5, newest_move=new_move)
 
         is_terminal = board.check_winning_state(current_player)
 
-    board_display.display_board(
-        board.convert_to_diamond_shape(), winner=current_player)
+    board_display.display_board(board, winner=current_player)
 
 
-def play_versus_actor(actor_episodes=100, board_size=4, best_move=True, player1=True):
+def play_versus_actor(actor, board_size=4, best_move=True, player1=True):
     board = HexStateManager(board_size=board_size)
     board_display = HexBoardDisplay()
-
-    model = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_{actor_episodes}", board_size=board_size)
 
     new_move = None
     is_terminal = False
     while not is_terminal:
-        board_display.display_board(
-            board.convert_to_diamond_shape(), delay=0.5, newest_move=new_move)
+        board_display.display_board(board, delay=0.5, newest_move=new_move)
         current_player = board.player
 
         if current_player == (1, 0) and player1 or current_player == (0, 1) and not player1:
@@ -79,32 +56,18 @@ def play_versus_actor(actor_episodes=100, board_size=4, best_move=True, player1=
 
             move = (int(x), int(y))
         else:
-            model_input = board.convert_to_nn_input()
-            moves = model.predict(model_input).reshape(-1,)
-
             if best_move:
-                move = np.argmax(moves)
-                move = (move // board_size, move % board_size)
+                move = actor.predict_best_move(board, temperature=1.0)
             else:
-                indices = np.arange(len(moves))
-
-                move = np.random.choice(indices, p=moves)
-                move = (move // board_size, move % board_size)
+                move = actor.predict_best_move(board, temperature=0.0)
 
         new_move = board.make_move(move)
-
         is_terminal = board.check_winning_state(current_player)
 
-    board_display.display_board(
-        board.convert_to_diamond_shape(), winner=current_player)
+    board_display.display_board(board, winner=current_player)
 
 
-def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random_player1=False, random_player2=False, best_move=False):
-    model = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_{actor1_episodes}", board_size=board_size)
-    model2 = BoardGameNetCNN(
-        saved_model=f"models/model_{board_size}x{board_size}_{actor2_episodes}", board_size=board_size)
-
+def compare_models(actor1=None, actor2=None, board_size=4, best_move=False):
     wins_player_1 = 0
     n_games = 100
 
@@ -116,36 +79,22 @@ def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random
         while not is_terminal:
             current_player = board.player
 
-            if current_player == (1, 0) and not random_player1:
-                model_input = board.convert_to_nn_input()
-                moves = model.call(model_input).reshape(-1,)
-
+            if current_player == (1, 0) and actor1 is not None:
                 if best_move:
-                    move = np.argmax(moves)
-                    move = (move // board_size, move % board_size)
+                    move = actor1.predict_move(board, temperature=1.0)
                 else:
-                    indices = np.arange(len(moves))
+                    move = actor1.predict_move(board, temperature=0)
 
-                    move = np.random.choice(indices, p=moves)
-                    move = (move // board_size, move % board_size)
-
-                new_move = board.make_move(move)
-            elif current_player == (0, 1) and not random_player2:
-                model_input = board.convert_to_nn_input()
-                moves = model2.call(model_input).reshape(-1,)
-
+                board.make_move(move)
+            elif current_player == (0, 1) and actor2 is not None:
                 if best_move:
-                    move = np.argmax(moves)
-                    move = (move // board_size, move % board_size)
+                    move = actor2.predict_move(board, temperature=1.0)
                 else:
-                    indices = np.arange(len(moves))
+                    move = actor2.predict_move(board, temperature=0)
 
-                    move = np.random.choice(indices, p=moves)
-                    move = (move // board_size, move % board_size)
-
-                new_move = board.make_move(move)
+                board.make_move(move)
             else:
-                new_move = board.make_random_move()
+                board.make_random_move()
 
             is_terminal = board.check_winning_state()
 
@@ -158,12 +107,24 @@ def compare_models(actor1_episodes=100, actor2_episodes=50, board_size=4, random
 
 
 if __name__ == "__main__":
-    mode = 'playd'
+    board_size = 5
+    actor1_episodes = 200
+    actor2_episodes = 100
+
+    saved_model1 = f"models_5x5_topp_best/model_{board_size}x{board_size}_{actor1_episodes}"
+    saved_model2 = f"models_5x5_topp_best/model_{board_size}x{board_size}_{actor2_episodes}"
+    model1 = BoardGameNetCNN(board_size=board_size, saved_model=saved_model1)
+    model2 = BoardGameNetCNN(board_size=board_size, saved_model=saved_model2)
+    actor1 = Actor("actor1", model1, board_size=board_size)
+    actor2 = Actor("actor2", model2, board_size=board_size)
+
+    mode = 'compared'
     if mode == 'compare':
-        compare_models(60, 100, 5, random_player1=False,
-                       random_player2=False, best_move=False)
+        compare_models(actor1=actor1, actor2=None,
+                       board_size=board_size, best_move=True)
     elif mode == 'play':
-        play_versus_actor(200, 5, best_move=True, player1=True)
+        play_versus_actor(actor1, board_size=board_size,
+                          best_move=True, player1=True)
     else:
-        visualize_one_game(160, 100, 7, random_player1=False,
-                           random_player2=False, best_move=True)
+        visualize_one_game(actor1=actor1, actor2=actor2,
+                           board_size=board_size, best_move=True)

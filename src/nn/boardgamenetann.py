@@ -2,11 +2,9 @@ import numpy as np
 import tensorflow as tf
 
 from . import nn_options
-import warnings
-import config
 
 
-class BoardGameNetCNN:
+class BoardGameNetANN:
     def __init__(self,
                  neural_network_dimensions=(64, 32),
                  lr=0.001,
@@ -32,29 +30,20 @@ class BoardGameNetCNN:
 
     def _build_model(self):
         self.model = tf.keras.models.Sequential()
-        # The input is a 2D array of size (board_size, board_size) with 5 channels
-        # Channel 0 is player 1's cells, channel 2 is player 2's cells, channel 3 is empty cells,
-        # channel 4 is 1 if current player is player 1, channel 5 is if current player is player 2
-        input_shape = (self.board_size, self.board_size, 5)
+        input_shape = (self.board_size**2 + 1,)
 
         self.model.add(tf.keras.layers.InputLayer(input_shape=input_shape))
-        self.model.add(tf.keras.layers.Conv2D(
-            32, kernel_size=(3, 3), padding='same', activation=self.activation))
-        self.model.add(tf.keras.layers.BatchNormalization())
-        self.model.add(tf.keras.layers.Flatten())
 
         for i in range(len(self.neural_network_dimensions)):
             self.model.add(tf.keras.layers.Dense(
                 self.neural_network_dimensions[i], activation=self.activation))
 
-        self.model.add(tf.keras.layers.BatchNormalization())
         self.model.add(tf.keras.layers.Dense(
             self.board_size**2, activation=self.output_activation))
 
-        self.model.compile(optimizer=self.optimizer(
-            learning_rate=config.LEARNING_RATE), loss=self.loss)
+        self.model.compile(optimizer=self.optimizer, loss=self.loss)
 
-    def fit(self, X, y, epochs=5, batch_size=32):
+    def fit(self, X, y, epochs=10, batch_size=32):
         self.model.fit(X, y, validation_split=0.2,
                        epochs=epochs, batch_size=batch_size)
 
@@ -81,7 +70,7 @@ class BoardGameNetCNN:
         return move
 
     def call(self, X):
-        mask = X[0, :, :, 2].flatten()
+        mask = (X[0, 1:] == 0).astype(int)
         # Convert to tensor
         X = tf.convert_to_tensor(X)
         prediction = self.model(X)
@@ -107,7 +96,7 @@ class BoardGameNetCNN:
     # Should make it possible to feed to convolutional neural network with 5 channels, 3 for occupancy
     # and 2 for each player's turn
     def convert_to_nn_input(self, state):
-        """Converts the game state to the input format of the convolutional neural network. 
+        """Converts the game state to the input format of the convolutional neural network.
         The 5 channels represent the game state as bitboards:
         Channel 1 is the cells occupied by player 1.
         Channel 2 is the cells occupied by player 2.
@@ -121,21 +110,13 @@ class BoardGameNetCNN:
         board = state.board
         player = state.player
 
-        nn_input = np.zeros(
-            shape=(self.board_size, self.board_size, 5), dtype=np.int8)
+        nn_input = np.zeros((self.board_size**2 + 1),)
 
-        is_occupied_player_1 = np.vectorize(
-            lambda x: 1 if x.occupant == (1, 0) else 0)
-        is_occupied_player_2 = np.vectorize(
-            lambda x: 1 if x.occupant == (0, 1) else 0)
-        is_occupied_empty = np.vectorize(
-            lambda x: 1 if x.is_empty() else 0)
+        occupation = np.vectorize(lambda x: 1 if x.occupant == (
+            1, 0) else 2 if x.occupant == (0, 1) else 0)
 
-        nn_input[:, :, 0] = is_occupied_player_1(board)
-        nn_input[:, :, 1] = is_occupied_player_2(board)
-        nn_input[:, :, 2] = is_occupied_empty(board)
-        nn_input[:, :, 3] = 1 if player == (1, 0) else 0
-        nn_input[:, :, 4] = 1 if player == (0, 1) else 0
+        nn_input[1:] = occupation(board).flatten()
+        nn_input[0] = 1 if player == (1, 0) else 2 if player == (0, 1) else 0
 
         nn_input = np.expand_dims(nn_input, axis=0)
 

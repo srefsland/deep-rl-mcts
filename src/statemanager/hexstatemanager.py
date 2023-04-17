@@ -133,62 +133,6 @@ class HexStateManager(StateManager):
 
         return move
 
-    # Inspired by the article here: https://www.idi.ntnu.no/emner/it3105/materials/neural/gao-2017.pdf
-    # Should make it possible to feed to convolutional neural network with 5 channels, 3 for occupancy
-    # and 2 for each player's turn
-    def convert_to_nn_input(self):
-        """Converts the game state to the input format of the convolutional neural network. 
-        The 5 channels represent the game state as bitboards:
-        Channel 1 is the cells occupied by player 1.
-        Channel 2 is the cells occupied by player 2.
-        Channel 3 is the cells currently unoccupied.
-        Channel 4 are all 1's if the current player is 1.
-        Channel 5 are all 1's if the current player is 2.
-
-        Returns:
-            np.ndarray: the nn input of shape (0, board_size, board_size, 5),
-        """
-        nn_input = np.zeros(
-            shape=(self.board_size, self.board_size, 5), dtype=np.int8)
-
-        is_occupied_player_1 = np.vectorize(
-            lambda x: 1 if x.occupant == (1, 0) else 0)
-        is_occupied_player_2 = np.vectorize(
-            lambda x: 1 if x.occupant == (0, 1) else 0)
-        is_occupied_empty = np.vectorize(
-            lambda x: 1 if x.is_empty() else 0)
-
-        nn_input[:, :, 0] = is_occupied_player_1(self.board)
-        nn_input[:, :, 1] = is_occupied_player_2(self.board)
-        nn_input[:, :, 2] = is_occupied_empty(self.board)
-        nn_input[:, :, 3] = 1 if self.player == (1, 0) else 0
-        nn_input[:, :, 4] = 1 if self.player == (0, 1) else 0
-
-        nn_input = np.expand_dims(nn_input, axis=0)
-
-        return nn_input
-
-    def convert_to_diamond_shape(self):
-        """Converts the game state to a diamond shape, which is the input format for displaying the board.
-        In effect, this rotates the board 45 degrees clockwise.
-
-        Example:
-        [[1],
-        [1, 2],
-        [1, 2, 3],
-        [1, 2],
-        [1]]
-
-        Returns:
-            list: the converted board state.
-        """
-        diamond_array = []
-        for i in range(-self.board_size + 1, self.board_size):
-            diamond_array.append(np.diagonal(
-                np.flipud(self.board), i).tolist())
-
-        return diamond_array
-
     def _is_within_bounds(self, row, col):
         """Ensures that the current row and column are within the bounds of the board.
 
@@ -324,9 +268,9 @@ class HexStateManager(StateManager):
 
         return False
 
-    def has_winning_move(self, player=None):
+    def get_winning_moves(self, player=None):
         """Checks if some of the child states results in a win. Useful for 
-        shortening the number of moves in each MCTS simulation.
+        shortening the number of moves in each episode.
 
         Args:
             player (tuple[int, int], optional): the player to check winning move for. Defaults to None.
@@ -359,3 +303,31 @@ class HexStateManager(StateManager):
             int: the reward that depends on which player is the winner.
         """
         return 1 if winner == (1, 0) else -1 if winner == (0, 1) else 0
+
+    def get_visit_distribution(self, node):
+        visit_distribution = np.zeros((self.board_size, self.board_size))
+
+        for child in node.children:
+            visit_distribution[child.move] = child.nsa
+
+        # Avoid division by zero
+        if np.sum(visit_distribution) > 0:
+            visit_distribution = visit_distribution / \
+                np.sum(visit_distribution)
+
+        visit_distribution = np.expand_dims(
+            visit_distribution.flatten(), axis=0)
+        return visit_distribution
+
+    def get_winning_distribution(self, winning_moves):
+        visit_distribution = np.zeros((self.board_size, self.board_size))
+
+        for move in winning_moves:
+            visit_distribution[move] = 1
+
+        # Normalize to 1
+        visit_distribution = visit_distribution / np.sum(visit_distribution)
+
+        visit_distribution = np.expand_dims(
+            visit_distribution.flatten(), axis=0)
+        return visit_distribution

@@ -7,10 +7,7 @@ from display.hexboarddisplay import HexBoardDisplay
 import config
 
 
-hexboard_display = HexBoardDisplay()
-
-
-def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
+def run_tournament(actors, state_manager, display, num_games=25, board_size=4, temperature=1.0):
     """Run the TOPP tournament for different actors.
 
     Args:
@@ -33,7 +30,12 @@ def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
             if i % 2 == 0:
                 # Display the last game of every series.
                 winner = run_game(
-                    actor1, actor2, board_size=board_size, temperature=temperature, display_game=display_game)
+                    actor1=actor1,
+                    actor2=actor2,
+                    state_manager=state_manager.copy_state(),
+                    display=display,
+                    temperature=temperature,
+                    display_game=display_game)
 
                 if winner == (1, 0):
                     actor1_wins += 1
@@ -42,7 +44,12 @@ def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
             else:
                 # Display the last game of every series.
                 winner = run_game(
-                    actor2, actor1, board_size=board_size, temperature=temperature, display_game=display_game)
+                    actor1=actor2,
+                    actor2=actor1,
+                    state_manager=state_manager.copy_state(),
+                    display=display,
+                    temperature=temperature,
+                    display_game=display_game)
 
                 if winner == (1, 0):
                     actor2_wins += 1
@@ -64,7 +71,7 @@ def run_tournament(actors, num_games=25, board_size=4, temperature=1.0):
     plt.show()
 
 
-def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
+def run_game(actor1, actor2, state_manager, display, temperature=1.0, display_game=False):
     """Run a game from the tournament.
 
     Args:
@@ -76,27 +83,28 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
     Returns:
         tuple[int, int]: the winner of the game
     """
-    board = HexStateManager(board_size=board_size)
-
     is_terminal = False
     while not is_terminal:
-        current_player = board.player
-
-        model_input = board.convert_to_nn_input()
+        
+        current_player = state_manager.player
 
         if current_player == (1, 0):
-            move = actor1.predict_move(model_input, temperature=temperature)
+            move = actor1.predict_move(state_manager, temperature=temperature)
         else:
-            move = actor2.predict_move(model_input, temperature=temperature)
+            move = actor2.predict_move(state_manager, temperature=temperature)
 
-        move = board.make_move(move)
+        move = state_manager.make_move(move)
 
-        is_terminal = board.check_winning_state()
+        is_terminal = state_manager.check_winning_state()
 
         if display_game:
             winner = current_player if is_terminal else None
-            hexboard_display.display_board(
-                board.convert_to_diamond_shape(), delay=0.3, newest_move=move, winner=winner, actor1=actor1.name, actor2=actor2.name)
+            display.display_board(state=state_manager,
+                                  delay=0.3,
+                                  newest_move=move,
+                                  winner=winner,
+                                  actor1=actor1.name,
+                                  actor2=actor2.name)
 
     winner = current_player
 
@@ -104,16 +112,28 @@ def run_game(actor1, actor2, board_size=4, temperature=1.0, display_game=False):
 
 
 if __name__ == "__main__":
+    display = HexBoardDisplay()
+    state_manager = HexStateManager(board_size=config.BOARD_SIZE)
+
     save_interval = config.NUM_EPISODES // (config.TOPP_M - 1)
 
-    agents = []
+    actors = []
     for i in range(config.TOPP_M):
-        print(
-            f"Loading model {i * save_interval} {config.BOARD_SIZE}x{config.BOARD_SIZE} from {config.MODEL_DIR}")
-        model = BoardGameNetCNN(
-            saved_model=f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{i * save_interval}", board_size=config.BOARD_SIZE)
-        agents.append(
-            Actor(f"model_{i * save_interval}", model, board_size=config.BOARD_SIZE))
+        model_dir = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{i * save_interval}"
 
-    run_tournament(agents, num_games=config.TOPP_NUM_GAMES,
-                   board_size=config.BOARD_SIZE, temperature=config.TOPP_TEMPERATURE)
+        print(f"Loading {model_dir}...")
+        model = BoardGameNetCNN(saved_model=model_dir,
+                                board_size=config.BOARD_SIZE)
+
+        actors.append(
+            Actor(name=f"model_{i * save_interval}",
+                  model=model,
+                  board_size=config.BOARD_SIZE)
+        )
+
+    run_tournament(actors, 
+                   state_manager=state_manager,
+                   display=display,
+                   num_games=config.TOPP_NUM_GAMES,
+                   board_size=config.BOARD_SIZE,
+                   temperature=config.TOPP_TEMPERATURE)

@@ -3,7 +3,7 @@ from collections import deque
 
 
 class ReplayBuffer:
-    def __init__(self, maxlen=800):
+    def __init__(self, maxlen=700):
         # Deque should be more efficient than the previous list, since the time complexity of appending and popping from a deque is constant
         self.replay_buffer = deque(maxlen=maxlen)
 

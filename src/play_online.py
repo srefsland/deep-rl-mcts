@@ -1,6 +1,7 @@
 from oht.ActorClient import ActorClient
 from actor import Actor
 from nn.boardgamenetcnn import BoardGameNetCNN
+import numpy as np
 
 board_size = 7
 model_dir = "models"
@@ -70,9 +71,9 @@ class MyClient(ActorClient):
                 --0--
                  /|
         """
-        nn_input = hex_actor.convert_state_to_nn_input(state)
+        nn_input = self.convert_state_to_nn_input_cnn(state)
 
-        move = hex_actor.predict_move(nn_input)
+        move = hex_actor.predict_move_model_input(model_input=nn_input)
         move = (int(move[0]), int(move[1]))
         self.logger.info(f'Get action: state={state}')
         self.logger.info(f'Picked deliberate move: {move[0]} {move[1]}')
@@ -123,6 +124,41 @@ class MyClient(ActorClient):
             score (float): Your score (your win %) for the tournament
         """
         self.logger.info('Tournament over: score=%s', score)
+        
+    def convert_state_to_nn_input_cnn(self, state):
+        """Converts the game state to the input format of the convolutional neural network. 
+        The 5 channels represent the game state as bitboards:
+        Channel 1 is the cells occupied by player 1.
+        Channel 2 is the cells occupied by player 2.
+        Channel 3 is the cells currently unoccupied.
+        Channel 4 are all 1's if the current player is 1.
+        Channel 5 are all 1's if the current player is 2.
+
+        Args:
+            state (np.ndarray): the player ID along with the board state.
+
+        Returns:
+            np.ndarray: the nn input of shape (0, board_size, board_size, 5),
+        """
+        player_to_move = state[0]
+        board = np.array(state[1:]).reshape((board_size, board_size))
+
+        nn_input = np.zeros(
+            shape=(board_size, board_size, 5), dtype=np.int8)
+
+        is_occupied_player_1 = np.vectorize(lambda x: 1 if x == 1 else 0)
+        is_occupied_player_2 = np.vectorize(lambda x: 1 if x == 2 else 0)
+        is_occupied_empty = np.vectorize(lambda x: 1 if x == 0 else 0)
+
+        nn_input[:, :, 0] = is_occupied_player_1(board)
+        nn_input[:, :, 1] = is_occupied_player_2(board)
+        nn_input[:, :, 2] = is_occupied_empty(board)
+        nn_input[:, :, 3] = 1 if player_to_move == 1 else 0
+        nn_input[:, :, 4] = 1 if player_to_move == 2 else 0
+
+        nn_input = np.expand_dims(nn_input, axis=0)
+
+        return nn_input
 
 
 if __name__ == '__main__':
