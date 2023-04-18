@@ -98,7 +98,7 @@ def rl_algorithm(nn, state_manager, display):
 
 
 if __name__ == "__main__":
-    nn = BoardGameNetANN(config.NEURAL_NETWORK_DIMENSIONS,
+    nn = BoardGameNetCNN(config.NEURAL_NETWORK_DIMENSIONS,
                          config.LEARNING_RATE,
                          config.ACTIVATION_FUNCTION,
                          config.OUTPUT_ACTIVATION_FUNCTION,

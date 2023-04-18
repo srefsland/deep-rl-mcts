@@ -6,6 +6,7 @@ import config
 from actor import Actor
 from display.hexboarddisplay import HexBoardDisplay
 from nn.boardgamenetcnn import BoardGameNetCNN
+from nn.boardgamenetann import BoardGameNetANN
 from statemanager.hexstatemanager import HexStateManager
 
 

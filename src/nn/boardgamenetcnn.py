@@ -1,8 +1,6 @@
 import numpy as np
 import tensorflow as tf
 
-import config
-
 from . import nn_options
 
 
@@ -53,8 +51,7 @@ class BoardGameNetCNN:
         self.model.add(tf.keras.layers.Dense(
             self.board_size**2, activation=self.output_activation))
 
-        self.model.compile(optimizer=self.optimizer(
-            learning_rate=config.LEARNING_RATE), loss=self.loss)
+        self.model.compile(optimizer=self.optimizer, loss=self.loss)
 
     def fit(self, X, y, epochs=5, batch_size=32):
         """Fits the model.
