@@ -29,7 +29,7 @@ def run_tournament(actors, state_manager, display, num_games=25, board_size=4, t
         actor2_wins = 0
 
         for i in range(num_games):
-            display_game = i == num_games - 1
+            display_game = i == num_games - 1 and config.TOPP_DISPLAY_GAMES
             if i % 2 == 0:
                 # Display the last game of every series.
                 winner = run_game(
@@ -103,7 +103,7 @@ def run_game(actor1, actor2, state_manager, display, temperature=1.0, display_ga
         if display_game:
             winner = current_player if is_terminal else None
             display.display_board(state=state_manager,
-                                  delay=0.3,
+                                  delay=0.2,
                                   newest_move=move,
                                   winner=winner,
                                   actor1=actor1.name,

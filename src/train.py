@@ -21,7 +21,7 @@ def rl_algorithm(nn, state_manager, display):
         display (GameBoardDisplay): game board display class to use.
     """
     # Configure logging level and format for console output
-    logging.basicConfig(level=logging.DEBUG,
+    logging.basicConfig(level=logging.INFO,
                         format='%(asctime)s - %(levelname)s - %(message)s')
 
     epsilon = config.EPSILON
@@ -52,7 +52,7 @@ def rl_algorithm(nn, state_manager, display):
                 start_time = time.time()
                 i = 0
 
-                while time.time() - start_time < 1 or i < config.MCTS_MIN_SIMULATIONS:
+                while time.time() - start_time < config.MCTS_DYNAMIC_SIMS_TIME or i < config.MCTS_MIN_SIMULATIONS:
                     i += 1
                     node = mcts_tree.tree_search()
                     reward = mcts_tree.leaf_evaluation(node, epsilon)
@@ -83,7 +83,7 @@ def rl_algorithm(nn, state_manager, display):
                 if winning_moves is not None
                 else mcts_tree.select_best_distribution()
             )
-            if config.DISPLAY_GAME_RL:
+            if config.DISPLAY_GAME_RL and g_a % config.DISPLAY_GAME_RL_INTERVAL == 0:
                 display.display_board(s.state, delay=0.1, newest_move=s.move)
             mcts_tree.prune_tree(s)
 

@@ -4,8 +4,6 @@ import numpy as np
 
 from .gameboarddisplay import GameBoardDisplay
 
-matplotlib.use('Qt5Agg')
-
 
 BLACK = (0, 0, 0)
 RED = (1, 0, 0)
