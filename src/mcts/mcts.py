@@ -77,7 +77,7 @@ class MCTS:
         Returns:
             _type_: _description_
         """
-        # Player (1, 0) wants
+        # Player (1, 0) wants to maximize the value, player (0, 1) wants to minimize the value
         if node.state.player == (1, 0):
             return child_node.qsa + self.get_exploration_bonus(node, child_node)
         else:

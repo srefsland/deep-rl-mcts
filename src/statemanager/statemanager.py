@@ -20,6 +20,10 @@ class StateManager(ABC):
     @abstractmethod
     def make_move(self, move, player):
         pass
+    
+    @abstractmethod
+    def make_random_move(self, player):
+        pass
 
     @abstractmethod
     def copy_state(self):
