@@ -2,7 +2,6 @@ import logging
 import time
 
 from tqdm import tqdm
-
 import config
 import replay_buffer
 from display.hexboarddisplay import HexBoardDisplay
@@ -44,7 +43,7 @@ def rl_algorithm(nn, state_manager, display):
         while not s.state.check_winning_state():
             winning_moves = None
             # Check winning state, to end episode early
-            if moves > (config.BOARD_SIZE - 1) * 2 - 1 and config.CHECK_WINNING_MOVES:
+            if moves > (config.BOARD_SIZE - 1) * 2 - 1 and config.CHECK_WINNING_MOVES_RL:
                 winning_moves = s.state.get_winning_moves()
 
             print(f"Move {moves}")
@@ -98,13 +97,22 @@ def rl_algorithm(nn, state_manager, display):
 
 
 if __name__ == "__main__":
-    nn = BoardGameNetCNN(config.NEURAL_NETWORK_DIMENSIONS,
+    nn = (BoardGameNetANN(config.NEURAL_NETWORK_DIMENSIONS,
                          config.LEARNING_RATE,
                          config.ACTIVATION_FUNCTION,
                          config.OUTPUT_ACTIVATION_FUNCTION,
                          config.LOSS_FUNCTION,
                          config.ANN_OPTIMIZER,
                          config.BOARD_SIZE)
+          if config.NN_TYPE == "ann"
+          else BoardGameNetCNN(config.NEURAL_NETWORK_DIMENSIONS,
+                               config.LEARNING_RATE,
+                               config.ACTIVATION_FUNCTION,
+                               config.OUTPUT_ACTIVATION_FUNCTION,
+                               config.LOSS_FUNCTION,
+                               config.CNN_OPTIMIZER,
+                               config.BOARD_SIZE)
+    )
     state_manager = HexStateManager(config.BOARD_SIZE)
     display = HexBoardDisplay()
     rl_algorithm(nn=nn, state_manager=state_manager, display=display)

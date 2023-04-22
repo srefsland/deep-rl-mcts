@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import config
 
 from actor import Actor
 from display.hexboarddisplay import HexBoardDisplay
 from nn.boardgamenetcnn import BoardGameNetCNN
+from nn.boardgamenetann import BoardGameNetANN
 from statemanager.hexstatemanager import HexStateManager
 
 # NOTE: this is only for testing, not part of the actual delivery, disregard this file.
@@ -38,7 +40,7 @@ def visualize_one_game(actor1=None, actor2=None, board_size=4, best_move=False):
 
         is_terminal = board.check_winning_state(current_player)
 
-    board_display.display_board(board, winner=current_player)
+    board_display.display_board(board, delay=0.5, winner=current_player)
 
 
 def play_versus_actor(actor, board_size=4, best_move=True, player1=True):
@@ -58,14 +60,14 @@ def play_versus_actor(actor, board_size=4, best_move=True, player1=True):
             move = (int(x), int(y))
         else:
             if best_move:
-                move = actor.predict_best_move(board, temperature=1.0)
+                move = actor.predict_move(board, temperature=1.0)
             else:
-                move = actor.predict_best_move(board, temperature=0.0)
+                move = actor.predict_move(board, temperature=0.0)
 
         new_move = board.make_move(move)
         is_terminal = board.check_winning_state(current_player)
 
-    board_display.display_board(board, winner=current_player)
+    board_display.display_board(board, delay=0.5, winner=current_player)
 
 
 def compare_models(actor1=None, actor2=None, board_size=4, best_move=False):
@@ -108,24 +110,29 @@ def compare_models(actor1=None, actor2=None, board_size=4, best_move=False):
 
 
 if __name__ == "__main__":
-    board_size = 5
     actor1_episodes = 200
     actor2_episodes = 100
 
-    saved_model1 = f"models_5x5_topp_best/model_{board_size}x{board_size}_{actor1_episodes}"
-    saved_model2 = f"models_5x5_topp_best/model_{board_size}x{board_size}_{actor2_episodes}"
-    model1 = BoardGameNetCNN(board_size=board_size, saved_model=saved_model1)
-    model2 = BoardGameNetCNN(board_size=board_size, saved_model=saved_model2)
-    actor1 = Actor("actor1", model1, board_size=board_size)
-    actor2 = Actor("actor2", model2, board_size=board_size)
+    saved_model1 = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{actor1_episodes}"
+    saved_model2 = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{actor2_episodes}"
+    model1 = (BoardGameNetANN(board_size=config.BOARD_SIZE, saved_model=saved_model1)
+              if config.NN_TYPE == "ann"
+              else BoardGameNetCNN(board_size=config.BOARD_SIZE, saved_model=saved_model1)
+              )
+    model2 = (BoardGameNetANN(board_size=config.BOARD_SIZE, saved_model=saved_model2)
+              if config.NN_TYPE == "ann"
+              else BoardGameNetCNN(board_size=config.BOARD_SIZE, saved_model=saved_model2)
+              )
+    actor1 = Actor("actor1", model1, board_size=config.BOARD_SIZE)
+    actor2 = Actor("actor2", model2, board_size=config.BOARD_SIZE)
 
-    mode = 'compared'
+    mode = 'play'
     if mode == 'compare':
         compare_models(actor1=actor1, actor2=None,
-                       board_size=board_size, best_move=True)
+                       board_size=config.BOARD_SIZE, best_move=True)
     elif mode == 'play':
-        play_versus_actor(actor1, board_size=board_size,
-                          best_move=True, player1=True)
+        play_versus_actor(actor1, board_size=config.BOARD_SIZE,
+                          best_move=True, player1=False)
     else:
         visualize_one_game(actor1=actor1, actor2=actor2,
-                           board_size=board_size, best_move=True)
+                           board_size=config.BOARD_SIZE, best_move=True)

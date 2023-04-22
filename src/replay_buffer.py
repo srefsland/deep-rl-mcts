@@ -8,6 +8,9 @@ class ReplayBuffer:
         # Deque should be more efficient than the previous list, since the time complexity of appending and popping from a deque is constant
         self.replay_buffer = deque(maxlen=maxlen)
 
+    def is_full(self):
+        return len(self.replay_buffer) == self.replay_buffer.maxlen
+
     def clear(self):
         """Clears the replay buffer, removing all the cases.
         """
@@ -36,11 +39,20 @@ class ReplayBuffer:
             minibatch = cases
         else:
             # Sample cases using weighted probability, idea is to sample more recent cases often
-            row_idx = np.random.choice(len(cases), size=batch_size, replace=False)
+            row_idx = np.random.choice(
+                len(cases), size=batch_size, replace=False)
             minibatch = [cases[i] for i in row_idx]
 
         X = np.concatenate([x.astype(np.float32)
-                        for x, _ in minibatch], axis=0)
+                            for x, _ in minibatch], axis=0)
         y = np.concatenate([y for _, y in minibatch], axis=0)
+
+        return X, y
+
+    def get_all_cases(self):
+        cases = list(self.replay_buffer)
+
+        X = np.concatenate([x.astype(np.float32) for x, _ in cases], axis=0)
+        y = np.concatenate([y for _, y in cases], axis=0)
 
         return X, y

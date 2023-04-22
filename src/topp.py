@@ -88,7 +88,7 @@ def run_game(actor1, actor2, state_manager, display, temperature=1.0, display_ga
     """
     is_terminal = False
     while not is_terminal:
-        
+
         current_player = state_manager.player
 
         if current_player == (1, 0):
@@ -125,8 +125,10 @@ if __name__ == "__main__":
         model_dir = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{i * save_interval}"
 
         print(f"Loading {model_dir}...")
-        model = BoardGameNetCNN(saved_model=model_dir,
-                                board_size=config.BOARD_SIZE)
+        model = (BoardGameNetANN(saved_model=model_dir, board_size=config.BOARD_SIZE)
+                 if config.NN_TYPE == "ann"
+                 else BoardGameNetCNN(saved_model=model_dir, board_size=config.BOARD_SIZE)
+                 )
 
         actors.append(
             Actor(name=f"model_{i * save_interval}",
@@ -134,7 +136,7 @@ if __name__ == "__main__":
                   board_size=config.BOARD_SIZE)
         )
 
-    run_tournament(actors, 
+    run_tournament(actors,
                    state_manager=state_manager,
                    display=display,
                    num_games=config.TOPP_NUM_GAMES,

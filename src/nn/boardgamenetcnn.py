@@ -38,6 +38,8 @@ class BoardGameNetCNN:
         input_shape = (self.board_size, self.board_size, 5)
 
         self.model.add(tf.keras.layers.InputLayer(input_shape=input_shape))
+        # self.model.add(tf.keras.layers.Conv2D(
+        #     16, kernel_size=(3, 3), padding='same', activation=self.activation))
         self.model.add(tf.keras.layers.Conv2D(
             32, kernel_size=(3, 3), padding='same', activation=self.activation))
         self.model.add(tf.keras.layers.BatchNormalization())
