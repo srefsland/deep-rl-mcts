@@ -2,7 +2,6 @@ import copy
 
 import numpy as np
 
-from .hexboardcell import HexBoardCell
 from .statemanager import StateManager
 
 # Notes (for square board representation)
@@ -11,7 +10,7 @@ from .statemanager import StateManager
 
 
 class HexStateManager(StateManager):
-    def __init__(self, board_size=6, player=(1, 0), board=None):
+    def __init__(self, board_size=6, player=1, board=None):
         if board is None:
             self.board = self._initialize_state(board_size)
             self.board_size = board_size
@@ -31,8 +30,8 @@ class HexStateManager(StateManager):
         Returns:
             np.ndarray: the newly created board.
         """
-        board = np.array([[HexBoardCell(row, col) for col in range(board_size)]
-                         for row in range(board_size)])
+        board = np.array([[0 for _ in range(board_size)]
+                         for _ in range(board_size)])
 
         return board
 
@@ -50,17 +49,17 @@ class HexStateManager(StateManager):
         """Fetches the legal moves for the current player, which is the empty cells.
 
         Args:
-            player (tuple[int, int], optional): The player to get the moves for. Defaults to None.
+            player (int, optional): The player to get the moves for. Defaults to None.
 
         Returns:
             list[tuple[int, int]]: the current legal moves, represented as (x, y) coordinates.
         """
         moves = []
 
-        for row in self.board:
-            for node in row:
-                if self.is_move_legal(node.position):
-                    moves.append(node.position)
+        for row in range(self.board_size):
+            for col in range(self.board_size):
+                if self.is_move_legal((row, col)):
+                    moves.append((row, col))
 
         return moves
 
@@ -68,9 +67,8 @@ class HexStateManager(StateManager):
         """Prints the current state of the board to the terminal. Mostly for debugging purposes.
         """
         for row in self.board:
-            for node in row:
-                occupant = 1 if node.occupant == (1, 0) else 2 if node.occupant == (
-                    0, 1) else 0
+            for cell in row:
+                occupant = 1 if cell == 1 else 2 if cell == -1 else 0
                 print(occupant, end=' ')
             print()
 
@@ -85,13 +83,13 @@ class HexStateManager(StateManager):
         Returns:
             bool: true if the move is legal, false otherwise.
         """
-        return self.board[move[0]][move[1]].is_empty()
+        return self.board[move] == 0
 
     def make_random_move(self, player=None):
         """Makes a random move for the current player.
 
         Args:
-            player (tuple[int, int], optional): the player to make the moves for. Defaults to None.
+            player (int, optional): the player to make the moves for. Defaults to None.
 
         Returns:
             tuple[int, int]: the randomly chosen move.
@@ -125,11 +123,11 @@ class HexStateManager(StateManager):
             player = self.player
 
         if self._is_within_bounds(move[0], move[1]) and self.is_move_legal(move):
-            self.board[move[0]][move[1]].occupant = player
+            self.board[move] = player
         else:
             raise Exception("Illegal move")
 
-        self.player = (0, 1) if player == (1, 0) else (1, 0)
+        self.player = -1 if player == 1 else 1
 
         return move
 
@@ -145,20 +143,20 @@ class HexStateManager(StateManager):
         """
         return row >= 0 and row < self.board_size and col >= 0 and col < self.board_size
 
-    def _expand_neighbors(self, node, player=None):
+    def _expand_neighbors(self, cell, player=None):
         """Finds neighbors that connect to the current node. Used to determine if the state is terminal (game over).
 
         Args:
-            node (HexCell): the hexcell to expand neighbors to.
-            player (tuple[int, int]), optional): _description_. Defaults to None.
+            cell (tuple[int, int]): the hexcell to expand neighbors to.
+            player (int), optional): _description_. Defaults to None.
 
         Returns:
-            list[HexCell]: the neighbors that connect.
+            list[tuple[int, int]]: the neighbors that connect.
         """
         if player is None:
             player = self.player
 
-        row, col = node.position
+        row, col = cell
 
         neighbors_coords = [(row - 1, col), (row + 1, col), (row, col - 1),
                             (row, col + 1), (row + 1, col - 1), (row - 1, col + 1)]
@@ -166,8 +164,8 @@ class HexStateManager(StateManager):
         neighbors = []
 
         for neighbor in neighbors_coords:
-            if self._is_within_bounds(neighbor[0], neighbor[1]) and self.board[neighbor[0]][neighbor[1]].occupant == player:
-                neighbors.append(self.board[neighbor[0]][neighbor[1]])
+            if self._is_within_bounds(neighbor[0], neighbor[1]) and self.board[neighbor[0]][neighbor[1]] == player:
+                neighbors.append(neighbor)
 
         return neighbors
 
@@ -198,14 +196,14 @@ class HexStateManager(StateManager):
         """Checks if there is a win in the current state of the board.
 
         Args:
-            player (tuple[int, int], optional): the player to check for win. Defaults to None.
+            player (int, optional): the player to check for win. Defaults to None.
 
         Returns:
             bool: true if the player has won, false if not.
         """
-        if player == (1, 0):
+        if player == 1:
             return self._check_winning_state_player1()
-        elif player == (0, 1):
+        elif player == -1:
             return self._check_winning_state_player2()
         else:
             return self._check_winning_state_player1() or self._check_winning_state_player2()
@@ -220,18 +218,18 @@ class HexStateManager(StateManager):
         nodes_to_visit = []
         nodes_visited = []
 
-        for col in self.board[0]:
-            if col.occupant == (1, 0):
-                nodes_to_visit.append(col)
+        for col in range(len(self.board[0])):
+            if self.board[0][col] == 1:
+                nodes_to_visit.append((0, col))
 
         while len(nodes_to_visit) > 0:
             node = nodes_to_visit.pop(0)
             nodes_visited.append(node)
 
-            if node.position[0] == self.board_size - 1:
+            if node[0] == self.board_size - 1:
                 return True
 
-            neighbors = self._expand_neighbors(node, (1, 0))
+            neighbors = self._expand_neighbors(node, 1)
 
             for neighbor in neighbors:
                 if neighbor not in nodes_to_visit and neighbor not in nodes_visited:
@@ -249,18 +247,18 @@ class HexStateManager(StateManager):
         nodes_to_visit = []
         nodes_visited = []
 
-        for row in self.board:
-            if row[0].occupant == (0, 1):
-                nodes_to_visit.append(row[0])
+        for row in range(len(self.board)):
+            if self.board[row][0] == -1:
+                nodes_to_visit.append((row, 0))
 
         while len(nodes_to_visit) > 0:
             node = nodes_to_visit.pop(0)
             nodes_visited.append(node)
 
-            if node.position[1] == self.board_size - 1:
+            if node[1] == self.board_size - 1:
                 return True
 
-            neighbors = self._expand_neighbors(node, (0, 1))
+            neighbors = self._expand_neighbors(node, -1)
 
             for neighbor in neighbors:
                 if neighbor not in nodes_to_visit and neighbor not in nodes_visited:
@@ -273,7 +271,7 @@ class HexStateManager(StateManager):
         shortening the number of moves in each episode.
 
         Args:
-            player (tuple[int, int], optional): the player to check winning move for. Defaults to None.
+            player (int, optional): the player to check winning move for. Defaults to None.
 
         Returns:
             list[tuple[int, int]]: the moves that results in a win, None if there are none that results in a win.
@@ -293,7 +291,7 @@ class HexStateManager(StateManager):
 
         return None if len(winning_moves) == 0 else winning_moves
 
-    def get_eval(self, winner=(1, 0)):
+    def get_eval(self, winner=1):
         """Passes the reward associated with a terminated game.
 
         Args:
@@ -302,7 +300,7 @@ class HexStateManager(StateManager):
         Returns:
             int: the reward that depends on which player is the winner.
         """
-        return 1 if winner == (1, 0) else -1 if winner == (0, 1) else 0
+        return 1 if winner == 1 else -1 if winner == -1 else 0
 
     def get_visit_distribution(self, node):
         """Gets the visit distribution of the children of the node it terms of nsa counts.

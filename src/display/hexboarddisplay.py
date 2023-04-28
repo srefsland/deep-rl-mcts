@@ -93,8 +93,7 @@ class HexBoardDisplay(GameBoardDisplay):
                                  posY, posY_bottom_left], '-', color='black')
 
                 # Determines the color of the cell to be drawn.
-                color = RED if board[i][j].occupant == (
-                    1, 0) else BLACK if board[i][j].occupant == (0, 1) else WHITE
+                color = RED if board[i][j].player == 1 else BLACK if board[i][j].player == -1 else WHITE
 
                 # This just enlarges the newest node, to make it easier to see what moves are taken.
                 if newest_move is not None and newest_move == board[i][j].position:
@@ -119,7 +118,7 @@ class HexBoardDisplay(GameBoardDisplay):
         if winner is not None:
             # Update title to the winner if there is one.
             plt.title(
-                f'The winner is player {1 if winner == (1, 0) else 2}', fontsize=20)
+                f'The winner is player {1 if winner == 1 else 2}', fontsize=20)
             plt.draw()
             plt.pause(delay)
 
@@ -142,6 +141,12 @@ class HexBoardDisplay(GameBoardDisplay):
         Returns:
             list: the converted board state.
         """
+        class PositionPlayer:
+            def __init__(self, position, player):
+                self.position = position
+                self.player = player
+        board = np.array([[PositionPlayer((i, j), board[i][j]) for j in range(
+            len(board))] for i in range(len(board))])
         board_size = len(board)
         diamond_array = []
         board = np.flipud(board)

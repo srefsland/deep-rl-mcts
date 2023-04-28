@@ -160,18 +160,15 @@ class BoardGameNetCNN:
         nn_input = np.zeros(
             shape=(self.board_size, self.board_size, 5), dtype=np.int8)
 
-        is_occupied_player_1 = np.vectorize(
-            lambda x: 1 if x.occupant == (1, 0) else 0)
-        is_occupied_player_2 = np.vectorize(
-            lambda x: 1 if x.occupant == (0, 1) else 0)
-        is_occupied_empty = np.vectorize(
-            lambda x: 1 if x.is_empty() else 0)
+        is_occupied_player_1 = np.vectorize(lambda x: 1 if x == 1 else 0)
+        is_occupied_player_2 = np.vectorize(lambda x: 1 if x == -1 else 0)
+        is_occupied_empty = np.vectorize(lambda x: 1 if x == 0 else 0)
 
         nn_input[:, :, 0] = is_occupied_player_1(board)
         nn_input[:, :, 1] = is_occupied_player_2(board)
         nn_input[:, :, 2] = is_occupied_empty(board)
-        nn_input[:, :, 3] = 1 if player == (1, 0) else 0
-        nn_input[:, :, 4] = 1 if player == (0, 1) else 0
+        nn_input[:, :, 3] = 1 if player == 1 else 0
+        nn_input[:, :, 4] = 1 if player == -1 else 0
 
         nn_input = np.expand_dims(nn_input, axis=0)
 

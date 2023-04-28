@@ -40,7 +40,7 @@ def run_tournament(actors, state_manager, display, num_games=25, board_size=4, t
                     temperature=temperature,
                     display_game=display_game)
 
-                if winner == (1, 0):
+                if winner == 1:
                     actor1_wins += 1
                 else:
                     actor2_wins += 1
@@ -54,7 +54,7 @@ def run_tournament(actors, state_manager, display, num_games=25, board_size=4, t
                     temperature=temperature,
                     display_game=display_game)
 
-                if winner == (1, 0):
+                if winner == 1:
                     actor2_wins += 1
                 else:
                     actor1_wins += 1
@@ -91,7 +91,7 @@ def run_game(actor1, actor2, state_manager, display, temperature=1.0, display_ga
 
         current_player = state_manager.player
 
-        if current_player == (1, 0):
+        if current_player == 1:
             move = actor1.predict_move(state_manager, temperature=temperature)
         else:
             move = actor2.predict_move(state_manager, temperature=temperature)

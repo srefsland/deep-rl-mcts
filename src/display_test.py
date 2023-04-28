@@ -19,14 +19,14 @@ def visualize_one_game(actor1=None, actor2=None, board_size=4, best_move=False):
     while not is_terminal:
         current_player = board.player
 
-        if current_player == (1, 0) and actor1 is not None:
+        if current_player == 1 and actor1 is not None:
             if best_move:
                 move = actor1.predict_move(board, temperature=1.0)
             else:
                 move = actor1.predict_move(board, temperature=0)
 
             new_move = board.make_move(move)
-        elif current_player == (0, 1) and actor2 is not None:
+        elif current_player == -1 and actor2 is not None:
             if best_move:
                 move = actor2.predict_move(board, temperature=1.0)
             else:
@@ -53,7 +53,7 @@ def play_versus_actor(actor, board_size=4, best_move=True, player1=True):
         board_display.display_board(board, delay=0.5, newest_move=new_move)
         current_player = board.player
 
-        if current_player == (1, 0) and player1 or current_player == (0, 1) and not player1:
+        if current_player == 1 and player1 or current_player == -1 and not player1:
             x = input("Enter x: ")
             y = input("Enter y: ")
 
@@ -82,14 +82,14 @@ def compare_models(actor1=None, actor2=None, board_size=4, best_move=False):
         while not is_terminal:
             current_player = board.player
 
-            if current_player == (1, 0) and actor1 is not None:
+            if current_player == 1 and actor1 is not None:
                 if best_move:
                     move = actor1.predict_move(board, temperature=1.0)
                 else:
                     move = actor1.predict_move(board, temperature=0)
 
                 board.make_move(move)
-            elif current_player == (0, 1) and actor2 is not None:
+            elif current_player == -1 and actor2 is not None:
                 if best_move:
                     move = actor2.predict_move(board, temperature=1.0)
                 else:
@@ -101,7 +101,7 @@ def compare_models(actor1=None, actor2=None, board_size=4, best_move=False):
 
             is_terminal = board.check_winning_state()
 
-        wins_player_1 += 1 if current_player == (1, 0) else 0
+        wins_player_1 += 1 if current_player == 1 else 0
 
     print(
         f"Player 1 won {wins_player_1} out of {n_games} games ({wins_player_1 / n_games * 100} %)")

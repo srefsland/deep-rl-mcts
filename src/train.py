@@ -98,21 +98,21 @@ def rl_algorithm(nn, state_manager, display):
 
 if __name__ == "__main__":
     nn = (BoardGameNetANN(config.NEURAL_NETWORK_DIMENSIONS,
-                         config.LEARNING_RATE,
-                         config.ACTIVATION_FUNCTION,
-                         config.OUTPUT_ACTIVATION_FUNCTION,
-                         config.LOSS_FUNCTION,
-                         config.ANN_OPTIMIZER,
-                         config.BOARD_SIZE)
+                          config.LEARNING_RATE,
+                          config.ACTIVATION_FUNCTION,
+                          config.OUTPUT_ACTIVATION_FUNCTION,
+                          config.LOSS_FUNCTION,
+                          config.ANN_OPTIMIZER,
+                          config.BOARD_SIZE)
           if config.NN_TYPE == "ann"
           else BoardGameNetCNN(config.NEURAL_NETWORK_DIMENSIONS,
                                config.LEARNING_RATE,
                                config.ACTIVATION_FUNCTION,
                                config.OUTPUT_ACTIVATION_FUNCTION,
                                config.LOSS_FUNCTION,
-                               config.CNN_OPTIMIZER,
+                               config.ANN_OPTIMIZER,
                                config.BOARD_SIZE)
-    )
+          )
     state_manager = HexStateManager(config.BOARD_SIZE)
     display = HexBoardDisplay()
     rl_algorithm(nn=nn, state_manager=state_manager, display=display)

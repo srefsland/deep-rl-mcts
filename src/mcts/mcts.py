@@ -50,7 +50,7 @@ class MCTS:
                 node_state_copy.make_move(move)
 
         # Winner should be the one that took the last move (the one that is not the current player)
-        winner = (1, 0) if node_state_copy.player == (0, 1) else (0, 1)
+        winner = 1 if node_state_copy.player == -1 else -1
         reward = node_state_copy.get_eval(winner)
 
         return reward
@@ -77,8 +77,8 @@ class MCTS:
         Returns:
             _type_: _description_
         """
-        # Player (1, 0) wants to maximize the value, player (0, 1) wants to minimize the value
-        if node.state.player == (1, 0):
+        # Player 1 wants to maximize the value, player 2 wants to minimize the value
+        if node.state.player == 1:
             return child_node.qsa + self.get_exploration_bonus(node, child_node)
         else:
             return child_node.qsa - self.get_exploration_bonus(node, child_node)
@@ -112,7 +112,7 @@ class MCTS:
             lambda child: self.get_ucb(node, child))
         ucb_values = vectorized_get_ucb(node_children)
 
-        if node.state.player == (1, 0):
+        if node.state.player == 1:
             return node_children[np.argmax(ucb_values)]
         else:
             return node_children[np.argmin(ucb_values)]

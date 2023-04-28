@@ -33,7 +33,7 @@ def test_empty_distribution():
     node.n = 11
     node.expand()
 
-    distribution = node.get_visit_distribution()
+    distribution = node.state.get_visit_distribution(node)
     distribution = np.squeeze(distribution)
 
     assert len(distribution) == 16
@@ -42,14 +42,14 @@ def test_empty_distribution():
 
 def test_non_empty_distribution():
     root_node = setup_node()
-    root_node.state.make_move((0, 3), (1, 0))
+    root_node.state.make_move((0, 3), 1)
     root_node.n = 11
     root_node.expand()
 
     for i, node in enumerate(root_node.children):
         node.nsa = i
 
-    distribution = root_node.get_visit_distribution()
+    distribution = root_node.state.get_visit_distribution(root_node)
     distribution = np.squeeze(distribution)
 
     assert distribution[3] == 0
