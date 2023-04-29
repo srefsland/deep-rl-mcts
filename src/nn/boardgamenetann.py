@@ -149,11 +149,8 @@ class BoardGameNetANN:
 
         nn_input = np.zeros((self.board_size**2 + 1),)
 
-        occupation = np.vectorize(
-            lambda x: 1 if x == 1 else -1 if x == -1 else 0)
-
-        nn_input[1:] = occupation(board).flatten()
-        nn_input[0] = 1 if player == 1 else -1 if player == -1 else 0
+        nn_input[1:] = board.flatten()
+        nn_input[0] = player
 
         nn_input = np.expand_dims(nn_input, axis=0)
 
