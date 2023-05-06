@@ -1,39 +1,37 @@
 from src.mcts.mctsnode import MCTSNode
+from src.mcts.mcts import MCTS
+from src.nn.boardgamenetann import BoardGameNetANN
 from src.statemanager.hexstatemanager import HexStateManager
+
+from src import config
 
 import numpy as np
 
 
 def setup_node():
     state = HexStateManager(4)
-    setup_node = MCTSNode(state=state, move=None, parent=None)
+    nn = None
 
-    return setup_node
+    tree = MCTS(state, nn)
+
+    return tree
 
 
 def test_expand():
-    node = setup_node()
-    node.n = 11
+    tree = setup_node()
 
-    node.expand()
+    node = tree.root
+
+    tree.expand_node(node)
 
     assert len(node.children) == 16
 
 
-def test_expand_without_n():
-    node = setup_node()
-
-    node.expand()
-
-    assert node.children is None
-
-
 def test_empty_distribution():
-    node = setup_node()
-    node.n = 11
-    node.expand()
+    tree = setup_node()
+    tree.expand_node(tree.root)
 
-    distribution = node.state.get_visit_distribution(node)
+    distribution = tree.state_manager.get_visit_distribution(tree.root)
     distribution = np.squeeze(distribution)
 
     assert len(distribution) == 16
@@ -41,15 +39,16 @@ def test_empty_distribution():
 
 
 def test_non_empty_distribution():
-    root_node = setup_node()
-    root_node.state.make_move((0, 3), 1)
-    root_node.n = 11
-    root_node.expand()
+    tree = setup_node()
+    tree.expand_node(tree.root)
 
-    for i, node in enumerate(root_node.children):
+    tree.prune_tree(tree.root.children[3])
+    tree.expand_node(tree.root)
+
+    for i, node in enumerate(tree.root.children):
         node.nsa = i
 
-    distribution = root_node.state.get_visit_distribution(root_node)
+    distribution = tree.state_manager.get_visit_distribution(tree.root)
     distribution = np.squeeze(distribution)
 
     assert distribution[3] == 0

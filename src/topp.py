@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 import config
 from actor import Actor
 from display.hexboarddisplay import HexBoardDisplay
-from nn.boardgamenetcnn import BoardGameNetCNN
 from nn.boardgamenetann import BoardGameNetANN
 from statemanager.hexstatemanager import HexStateManager
 
 
-def run_tournament(actors, state_manager, display, num_games=25, board_size=4, temperature=1.0):
+def run_tournament(
+    actors, state_manager, display, num_games=25, board_size=4, temperature=1.0
+):
     """Run the TOPP tournament for different actors.
 
     Args:
@@ -35,10 +36,11 @@ def run_tournament(actors, state_manager, display, num_games=25, board_size=4, t
                 winner = run_game(
                     actor1=actor1,
                     actor2=actor2,
-                    state_manager=state_manager.copy_state(),
+                    state_manager=state_manager.copy_state_manager(),
                     display=display,
                     temperature=temperature,
-                    display_game=display_game)
+                    display_game=display_game,
+                )
 
                 if winner == 1:
                     actor1_wins += 1
@@ -49,10 +51,11 @@ def run_tournament(actors, state_manager, display, num_games=25, board_size=4, t
                 winner = run_game(
                     actor1=actor2,
                     actor2=actor1,
-                    state_manager=state_manager.copy_state(),
+                    state_manager=state_manager.copy_state_manager(),
                     display=display,
                     temperature=temperature,
-                    display_game=display_game)
+                    display_game=display_game,
+                )
 
                 if winner == 1:
                     actor2_wins += 1
@@ -65,8 +68,7 @@ def run_tournament(actors, state_manager, display, num_games=25, board_size=4, t
             print(f"{actor1.name} vs {actor2.name}: {actor1_wins} - {actor2_wins}")
 
     total_games = sum(agent_wins.values())
-    win_percentage = {agent: wins /
-                      total_games for agent, wins in agent_wins.items()}
+    win_percentage = {agent: wins / total_games for agent, wins in agent_wins.items()}
     plt.figure()
     # Display bar plot for each agent wins
     plt.title(f"TOPP Tournament {board_size}x{board_size} Win Percentages (%)")
@@ -74,7 +76,9 @@ def run_tournament(actors, state_manager, display, num_games=25, board_size=4, t
     plt.show()
 
 
-def run_game(actor1, actor2, state_manager, display, temperature=1.0, display_game=False):
+def run_game(
+    actor1, actor2, state_manager, display, temperature=1.0, display_game=False
+):
     """Run a game from the tournament.
 
     Args:
@@ -88,7 +92,6 @@ def run_game(actor1, actor2, state_manager, display, temperature=1.0, display_ga
     """
     is_terminal = False
     while not is_terminal:
-
         current_player = state_manager.player
 
         if current_player == 1:
@@ -102,12 +105,14 @@ def run_game(actor1, actor2, state_manager, display, temperature=1.0, display_ga
 
         if display_game:
             winner = current_player if is_terminal else None
-            display.display_board(state=state_manager,
-                                  delay=0.2,
-                                  newest_move=move,
-                                  winner=winner,
-                                  actor1=actor1.name,
-                                  actor2=actor2.name)
+            display.display_board(
+                state=state_manager,
+                delay=0.2,
+                newest_move=move,
+                winner=winner,
+                actor1=actor1.name,
+                actor2=actor2.name,
+            )
 
     winner = current_player
 
@@ -125,20 +130,21 @@ if __name__ == "__main__":
         model_dir = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{i * save_interval}"
 
         print(f"Loading {model_dir}...")
-        model = (BoardGameNetANN(saved_model=model_dir, board_size=config.BOARD_SIZE)
-                 if config.NN_TYPE == "ann"
-                 else BoardGameNetCNN(saved_model=model_dir, board_size=config.BOARD_SIZE)
-                 )
+        model = BoardGameNetANN(saved_model=model_dir, board_size=config.BOARD_SIZE)
 
         actors.append(
-            Actor(name=f"model_{i * save_interval}",
-                  model=model,
-                  board_size=config.BOARD_SIZE)
+            Actor(
+                name=f"model_{i * save_interval}",
+                model=model,
+                board_size=config.BOARD_SIZE,
+            )
         )
 
-    run_tournament(actors,
-                   state_manager=state_manager,
-                   display=display,
-                   num_games=config.TOPP_NUM_GAMES,
-                   board_size=config.BOARD_SIZE,
-                   temperature=config.TOPP_TEMPERATURE)
+    run_tournament(
+        actors,
+        state_manager=state_manager,
+        display=display,
+        num_games=config.TOPP_NUM_GAMES,
+        board_size=config.BOARD_SIZE,
+        temperature=config.TOPP_TEMPERATURE,
+    )

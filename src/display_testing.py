@@ -1,8 +1,6 @@
 import config
-
 from actor import Actor
 from display.hexboarddisplay import HexBoardDisplay
-from nn.boardgamenetcnn import BoardGameNetCNN
 from nn.boardgamenetann import BoardGameNetANN
 from statemanager.hexstatemanager import HexStateManager
 
@@ -102,9 +100,11 @@ def compare_models(actor1=None, actor2=None, board_size=4, best_move=False):
         wins_player_1 += 1 if current_player == 1 else 0
 
     print(
-        f"Player 1 won {wins_player_1} out of {n_games} games ({wins_player_1 / n_games * 100} %)")
+        f"Player 1 won {wins_player_1} out of {n_games} games ({wins_player_1 / n_games * 100} %)"
+    )
     print(
-        f"Player 2 won {n_games - wins_player_1} out of {n_games} games ({(n_games - wins_player_1) / n_games * 100} %)")
+        f"Player 2 won {n_games - wins_player_1} out of {n_games} games ({(n_games - wins_player_1) / n_games * 100} %)"
+    )
 
 
 if __name__ == "__main__":
@@ -113,24 +113,21 @@ if __name__ == "__main__":
 
     saved_model1 = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{actor1_episodes}"
     saved_model2 = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{actor2_episodes}"
-    model1 = (BoardGameNetANN(board_size=config.BOARD_SIZE, saved_model=saved_model1)
-              if config.NN_TYPE == "ann"
-              else BoardGameNetCNN(board_size=config.BOARD_SIZE, saved_model=saved_model1)
-              )
-    model2 = (BoardGameNetANN(board_size=config.BOARD_SIZE, saved_model=saved_model2)
-              if config.NN_TYPE == "ann"
-              else BoardGameNetCNN(board_size=config.BOARD_SIZE, saved_model=saved_model2)
-              )
+    model1 = BoardGameNetANN(board_size=config.BOARD_SIZE, saved_model=saved_model1)
+    model2 = BoardGameNetANN(board_size=config.BOARD_SIZE, saved_model=saved_model2)
     actor1 = Actor("actor1", model1, board_size=config.BOARD_SIZE)
     actor2 = Actor("actor2", model2, board_size=config.BOARD_SIZE)
 
-    mode = 'play'
-    if mode == 'compare':
-        compare_models(actor1=actor1, actor2=None,
-                       board_size=config.BOARD_SIZE, best_move=True)
-    elif mode == 'play':
-        play_versus_actor(actor1, board_size=config.BOARD_SIZE,
-                          best_move=True, player1=False)
+    mode = "play"
+    if mode == "compare":
+        compare_models(
+            actor1=actor1, actor2=None, board_size=config.BOARD_SIZE, best_move=True
+        )
+    elif mode == "play":
+        play_versus_actor(
+            actor1, board_size=config.BOARD_SIZE, best_move=True, player1=False
+        )
     else:
-        visualize_one_game(actor1=actor1, actor2=actor2,
-                           board_size=config.BOARD_SIZE, best_move=True)
+        visualize_one_game(
+            actor1=actor1, actor2=actor2, board_size=config.BOARD_SIZE, best_move=True
+        )

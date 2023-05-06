@@ -4,10 +4,11 @@ from .mctsnode import MCTSNode
 
 
 class MCTS:
-    def __init__(self, root_state, default_policy, c=1.0):
+    def __init__(self, state_manager, default_policy, c=1.0):
         self.c = c
         self.default_policy = default_policy
-        self.root = MCTSNode(root_state, None)
+        self.state_manager = state_manager
+        self.root = MCTSNode(state_manager.board, state_manager.player)
 
     def tree_search(self):
         """Traverses the tree and picks the best node based on the UCB value.
@@ -20,15 +21,14 @@ class MCTS:
         while not node.is_leaf_node():
             node = self.select_best_ucb(node)
 
-        if not node.is_terminal():
-            expand = node.expand()
+        if not self.is_terminal(node):
+            self.expand_node(node)
 
-            if expand:
-                node = self.select_best_ucb(node)
+            node = self.select_best_ucb(node)
 
         return node
 
-    def leaf_evaluation(self, node, epsilon):
+    def leaf_evaluation(self, node, epsilon, epsilon_critic):
         """This is the rollout function that evaluates the leaf node.
 
         Args:
@@ -38,20 +38,28 @@ class MCTS:
         Returns:
             int: the reward that the state manager calculates.
         """
-        node_state_copy = node.state.copy_state()
+        self.state_manager.update_state(node.state, node.player)
 
-        # Perform rollout
-        while not node_state_copy.check_winning_state():
-            # Epsilon-greedy policy
-            if np.random.random() < epsilon:
-                node_state_copy.make_random_move()
-            else:
-                move = self.default_policy.predict_best_move(node_state_copy)
-                node_state_copy.make_move(move)
+        # Call critic
+        if np.random.random() > epsilon_critic:
+            reward = self.default_policy.call_critic(node.state, node.player)
+        else:
+            # Perform rollout
+            while not self.state_manager.check_winning_state():
+                # Epsilon-greedy policy
+                if np.random.random() < epsilon:
+                    self.state_manager.make_random_move()
+                else:
+                    move = self.default_policy.predict_best_move(
+                        self.state_manager.board, self.state_manager.player
+                    )
+                    self.state_manager.make_move(move)
 
-        # Winner should be the one that took the last move (the one that is not the current player)
-        winner = 1 if node_state_copy.player == -1 else -1
-        reward = node_state_copy.get_eval(winner)
+            # Winner should be the one that took the last move (the one that is not the current player)
+            winner = 1 if self.state_manager.player == -1 else -1
+            reward = self.state_manager.get_eval(winner)
+
+        self.state_manager.update_state(self.root.state, self.root.player)
 
         return reward
 
@@ -66,6 +74,18 @@ class MCTS:
             node.update_values(reward)
             node = node.parent
 
+    def expand_node(self, node):
+        """Expands the node (finds the child states) if a sufficient number of visits are made."""
+        self.state_manager.update_state(node.state, node.player)
+        node.children = np.array(
+            [
+                MCTSNode(state=child_state, player=player, move=move, parent=node)
+                for child_state, player, move in self.state_manager.generate_child_states()
+            ]
+        )
+
+        self.state_manager.update_state(self.root.state, self.root.player)
+
     # Upper confidence bound that balances exploration (U(s,a)) and exploitation (Q(s,a))
     def get_ucb(self, node, child_node):
         """Calculates the upper confidence bound for the given node and child node.
@@ -78,10 +98,10 @@ class MCTS:
             _type_: _description_
         """
         # Player 1 wants to maximize the value, player 2 wants to minimize the value
-        if node.state.player == 1:
-            return child_node.qsa + self.get_exploration_bonus(node, child_node)
+        if node.player == 1:
+            return child_node.q + self.get_exploration_bonus(node, child_node)
         else:
-            return child_node.qsa - self.get_exploration_bonus(node, child_node)
+            return child_node.q - self.get_exploration_bonus(node, child_node)
 
     # Exploration term
     def get_exploration_bonus(self, node, child_node):
@@ -94,7 +114,7 @@ class MCTS:
         Returns:
             float: the exploration bonus.
         """
-        return self.c * np.sqrt(np.log(node.n + 1) / (child_node.nsa + 1))
+        return self.c * np.sqrt(np.log(node.n + 1) / (child_node.n + 1))
 
     def select_best_ucb(self, node):
         """Selects the best ucb value for the given node. The value is minimized or maximized
@@ -108,11 +128,10 @@ class MCTS:
         """
         node_children = node.children
 
-        vectorized_get_ucb = np.vectorize(
-            lambda child: self.get_ucb(node, child))
+        vectorized_get_ucb = np.vectorize(lambda child: self.get_ucb(node, child))
         ucb_values = vectorized_get_ucb(node_children)
 
-        if node.state.player == 1:
+        if node.player == 1:
             return node_children[np.argmax(ucb_values)]
         else:
             return node_children[np.argmin(ucb_values)]
@@ -126,9 +145,9 @@ class MCTS:
         node = self.root
         node_children = node.children
 
-        get_nsa = np.vectorize(lambda child: child.nsa)
+        get_n = np.vectorize(lambda child: child.n)
 
-        return node_children[np.argmax(get_nsa(node_children))]
+        return node_children[np.argmax(get_n(node_children))]
 
     def select_winning_move(self, winning_move):
         """This disregards the visit count and picks a node that is in a winning state.
@@ -157,3 +176,17 @@ class MCTS:
         """
         self.root = node
         self.root.parent = None
+
+    def is_terminal(self, node):
+        """Checks if the node is a terminal node (game is over).
+
+        Returns:
+            bool: True if the node is a terminal node, False otherwise.
+        """
+        self.state_manager.update_state(node.state, node.player)
+
+        is_terminal = self.state_manager.check_winning_state()
+
+        self.state_manager.update_state(self.root.state, self.root.player)
+
+        return is_terminal

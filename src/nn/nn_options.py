@@ -5,7 +5,7 @@ activation_functions = {
     "sigmoid": tf.keras.activations.sigmoid,
     "tanh": tf.keras.activations.tanh,
     "softmax": tf.keras.activations.softmax,
-    "linear": tf.keras.activations.linear
+    "linear": tf.keras.activations.linear,
 }
 
 optimizers = {
@@ -19,4 +19,5 @@ loss_functions = {
     "categorical_crossentropy": tf.keras.losses.CategoricalCrossentropy,
     "sparse_categorical_crossentropy": tf.keras.losses.SparseCategoricalCrossentropy,
     "kl_divergence": tf.keras.losses.KLDivergence,
+    "mse": tf.keras.losses.MeanSquaredError,
 }

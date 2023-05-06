@@ -6,7 +6,23 @@ from abc import ABC, abstractmethod
 
 class StateManager(ABC):
     @abstractmethod
-    def check_winning_state(self, player):
+    def update_state(self, state, player):
+        pass
+
+    @abstractmethod
+    def copy_state_manager(self):
+        pass
+
+    @abstractmethod
+    def get_legal_moves(self, player):
+        pass
+
+    @abstractmethod
+    def make_move(self, move, player):
+        pass
+
+    @abstractmethod
+    def make_random_move(self, player):
         pass
 
     @abstractmethod
@@ -14,19 +30,15 @@ class StateManager(ABC):
         pass
 
     @abstractmethod
-    def get_moves_legal(self, player):
+    def check_winning_state(self, player):
         pass
 
     @abstractmethod
-    def make_move(self, move, player):
+    def get_winning_moves(self, player):
         pass
-    
+        
     @abstractmethod
-    def make_random_move(self, player):
-        pass
-
-    @abstractmethod
-    def copy_state(self):
+    def reset(self):
         pass
 
     @abstractmethod
@@ -40,7 +52,3 @@ class StateManager(ABC):
     @abstractmethod
     def get_winning_distribution(self, winning_moves):
         pass
-
-    @abstractmethod
-    def get_winning_moves(self, player):
-        self

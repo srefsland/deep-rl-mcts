@@ -12,8 +12,7 @@ class ReplayBuffer:
         return len(self.replay_buffer) == self.replay_buffer.maxlen
 
     def clear(self):
-        """Clears the replay buffer, removing all the cases.
-        """
+        """Clears the replay buffer, removing all the cases."""
         self.replay_buffer.clear()
 
     # A case should be a game state (root state of current game) combined with the target distribution D, derived from MCTS simulations
@@ -39,20 +38,20 @@ class ReplayBuffer:
             minibatch = cases
         else:
             # Sample cases using weighted probability, idea is to sample more recent cases often
-            row_idx = np.random.choice(
-                len(cases), size=batch_size, replace=False)
+            row_idx = np.random.choice(len(cases), size=batch_size, replace=False)
             minibatch = [cases[i] for i in row_idx]
 
-        X = np.concatenate([x.astype(np.float32)
-                            for x, _ in minibatch], axis=0)
-        y = np.concatenate([y for _, y in minibatch], axis=0)
+        X = np.concatenate([x.astype(np.float32) for x, _, _ in minibatch], axis=0)
+        y_actor = np.concatenate([y_critic for _, y_critic, _ in minibatch], axis=0)
+        y_critic = np.concatenate([y_critic for _, _, y_critic in minibatch], axis=0)
 
-        return X, y
+        return X, y_actor, y_critic
 
     def get_all_cases(self):
         cases = list(self.replay_buffer)
 
-        X = np.concatenate([x.astype(np.float32) for x, _ in cases], axis=0)
-        y = np.concatenate([y for _, y in cases], axis=0)
+        X = np.concatenate([x.astype(np.float32) for x, _, _ in cases], axis=0)
+        y_actor = np.concatenate([y_critic for _, y_critic, _ in cases], axis=0)
+        y_critic = np.concatenate([y_critic for _, _, y_critic in cases], axis=0)
 
-        return X, y
+        return X, y_actor, y_critic

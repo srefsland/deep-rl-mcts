@@ -2,8 +2,7 @@ import numpy as np
 
 
 class Actor:
-    """The actor class is used to make moves from trained neural networks.
-    """
+    """The actor class is used to make moves from trained neural networks."""
 
     def __init__(self, name, model, board_size):
         self.name = name
@@ -21,9 +20,11 @@ class Actor:
             tuple[int, int]: the move taken.
         """
         if np.random.random() < temperature:
-            move = self.model.predict_best_move(state=state)
+            move = self.model.predict_best_move(state=state.board, player=state.player)
         else:
-            move = self.model.predict_probabilistic_move(state=state)
+            move = self.model.predict_probabilistic_move(
+                state=state.board, player=state.player
+            )
 
         return move
 
@@ -40,7 +41,6 @@ class Actor:
         if np.random.random() < temperature:
             move = self.model.predict_best_move(model_input=model_input)
         else:
-            move = self.model.predict_probabilistic_move(
-                model_input=model_input)
+            move = self.model.predict_probabilistic_move(model_input=model_input)
 
         return move
