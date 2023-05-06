@@ -46,7 +46,7 @@ def test_non_empty_distribution():
     tree.expand_node(tree.root)
 
     for i, node in enumerate(tree.root.children):
-        node.nsa = i
+        node.n = i
 
     distribution = tree.state_manager.get_visit_distribution(tree.root)
     distribution = np.squeeze(distribution)
