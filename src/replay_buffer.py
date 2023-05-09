@@ -42,7 +42,7 @@ class ReplayBuffer:
             minibatch = [cases[i] for i in row_idx]
 
         X = np.concatenate([x.astype(np.float32) for x, _, _ in minibatch], axis=0)
-        y_actor = np.concatenate([y_critic for _, y_critic, _ in minibatch], axis=0)
+        y_actor = np.concatenate([y_actor for _, y_actor, _ in minibatch], axis=0)
         y_critic = np.concatenate([y_critic for _, _, y_critic in minibatch], axis=0)
 
         return X, y_actor, y_critic
@@ -51,7 +51,7 @@ class ReplayBuffer:
         cases = list(self.replay_buffer)
 
         X = np.concatenate([x.astype(np.float32) for x, _, _ in cases], axis=0)
-        y_actor = np.concatenate([y_critic for _, y_critic, _ in cases], axis=0)
+        y_actor = np.concatenate([y_actor for _, y_actor, _ in cases], axis=0)
         y_critic = np.concatenate([y_critic for _, _, y_critic in cases], axis=0)
 
         return X, y_actor, y_critic

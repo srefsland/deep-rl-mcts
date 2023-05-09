@@ -85,9 +85,16 @@ class BoardGameNetANN:
             epochs (int, optional): number of epochs in training. Defaults to 10.
             batch_size (int, optional): the batch size. Defaults to 32.
         """
+        early_stop = tf.keras.callbacks.EarlyStopping(monitor="val_loss", patience=2)
+
         y = [y_actor, y_critic]
         losses = self.model.fit(
-            X, y, validation_split=0.2, epochs=epochs, batch_size=batch_size
+            X,
+            y,
+            validation_split=0.2,
+            epochs=epochs,
+            batch_size=batch_size,
+            callbacks=[early_stop],
         )
 
         self.losses_actor.append(losses.history["actor_loss"][-1])
@@ -220,10 +227,9 @@ class BoardGameNetANN:
         """
         self.model.save(path)
 
-    def display_losses(self):
-        """Displays the losses in a plot."""
+    def save_losses(self):
+        """Saves the plot the losses to file."""
         if not self.plot_created:
-            plt.ion()
             self.fig, (self.ax1, self.ax2) = plt.subplots(2, 1)
             self.ax1.set_title("Actor Loss")
             self.ax2.set_title("Critic Loss")
@@ -244,5 +250,4 @@ class BoardGameNetANN:
         self.ax1.legend()
         self.ax2.legend()
 
-        plt.draw()
-        plt.pause(0.5)
+        self.fig.savefig(f"images/losses_{self.board_size}x{self.board_size}.png")

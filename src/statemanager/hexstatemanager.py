@@ -258,7 +258,7 @@ class HexStateManager(StateManager):
                 nodes_to_visit.append((0, col))
 
         while len(nodes_to_visit) > 0:
-            node = nodes_to_visit.pop(0)
+            node = nodes_to_visit.pop()
             nodes_visited.append(node)
 
             if node[0] == self.board_size - 1:
@@ -286,7 +286,7 @@ class HexStateManager(StateManager):
                 nodes_to_visit.append((row, 0))
 
         while len(nodes_to_visit) > 0:
-            node = nodes_to_visit.pop(0)
+            node = nodes_to_visit.pop()
             nodes_visited.append(node)
 
             if node[1] == self.board_size - 1:

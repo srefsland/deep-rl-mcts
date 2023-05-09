@@ -108,7 +108,7 @@ def compare_models(actor1=None, actor2=None, board_size=4, best_move=False):
 
 
 if __name__ == "__main__":
-    actor1_episodes = 200
+    actor1_episodes = 350
     actor2_episodes = 100
 
     saved_model1 = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{actor1_episodes}"

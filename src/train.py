@@ -90,7 +90,7 @@ def rl_algorithm(nn, state_manager, display):
                 (
                     nn.convert_to_nn_input(s.state, s.player),
                     distribution,
-                    np.array([s.q]),
+                    np.array([s.q if winning_moves is None else s.player]),
                 )
             )
 
@@ -118,7 +118,7 @@ def rl_algorithm(nn, state_manager, display):
             nn.save_model(f"models/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{g_a}")
 
             if g_a != 0:
-                nn.display_losses()
+                nn.save_losses()
 
 
 if __name__ == "__main__":
