@@ -1,4 +1,3 @@
-import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -6,6 +5,7 @@ from .gameboarddisplay import GameBoardDisplay
 
 
 BLACK = (0, 0, 0)
+BLUE = (0, 0, 1)
 RED = (1, 0, 0)
 WHITE = (1, 1, 1)
 PX = 1 / plt.rcParams["figure.dpi"]
@@ -79,7 +79,7 @@ class HexBoardDisplay(GameBoardDisplay):
             [],
             "o",
             markersize=10,
-            color=BLACK,
+            color=BLUE,
             label=player2,
             markeredgecolor=(0, 0, 0),
             markeredgewidth=1,
@@ -142,7 +142,7 @@ class HexBoardDisplay(GameBoardDisplay):
                 color = (
                     RED
                     if board[i][j].player == 1
-                    else BLACK
+                    else BLUE
                     if board[i][j].player == -1
                     else WHITE
                 )

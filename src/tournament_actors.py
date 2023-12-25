@@ -1,11 +1,13 @@
+import os
 from itertools import combinations
 
 import matplotlib.pyplot as plt
 
 import config
 from actor import Actor
+from nn.boardgamenetcnn import BoardGameNetCNN
 from display.hexboarddisplay import HexBoardDisplay
-from nn.boardgamenetann import BoardGameNetANN
+from display.hexboarddisplayclassic import HexBoardDisplayClassic
 from statemanager.hexstatemanager import HexStateManager
 
 
@@ -91,15 +93,21 @@ def run_game(
         tuple[int, int]: the winner of the game
     """
     is_terminal = False
+    
+    first_move = True
     while not is_terminal:
-        current_player = state_manager.player
-
-        if current_player == 1:
-            move = actor1.predict_move(state_manager, temperature=temperature)
+        if first_move:
+            move = state_manager.make_random_move()
+            first_move = False
         else:
-            move = actor2.predict_move(state_manager, temperature=temperature)
+            current_player = state_manager.player
 
-        move = state_manager.make_move(move)
+            if current_player == 1:
+                move = actor1.predict_best_move(state=state_manager.board, player=state_manager.player)
+            else:
+                move = actor2.predict_best_move(state=state_manager.board, player=state_manager.player)
+
+            move = state_manager.make_move(move)
 
         is_terminal = state_manager.check_winning_state()
 
@@ -120,22 +128,22 @@ def run_game(
 
 
 if __name__ == "__main__":
-    display = HexBoardDisplay()
+    display = HexBoardDisplayClassic() if config.CLASSIC_DISPLAY else HexBoardDisplay()
     state_manager = HexStateManager(board_size=config.BOARD_SIZE)
 
-    save_interval = config.NUM_EPISODES // (config.TOPP_M - 1)
+    save_interval = config.SAVE_INTERVAL
 
     actors = []
-    for i in range(config.TOPP_M):
+    for i in range(len(os.listdir(config.MODEL_DIR))):
         model_dir = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{i * save_interval}"
 
         print(f"Loading {model_dir}...")
-        model = BoardGameNetANN(saved_model=model_dir, board_size=config.BOARD_SIZE)
+        model = BoardGameNetCNN(saved_model=model_dir, board_size=config.BOARD_SIZE)
 
         actors.append(
             Actor(
                 name=f"model_{i * save_interval}",
-                model=model,
+                nn=model,
                 board_size=config.BOARD_SIZE,
             )
         )

@@ -37,7 +37,6 @@ class ReplayBuffer:
         if batch_size >= len(cases):
             minibatch = cases
         else:
-            # Sample cases using weighted probability, idea is to sample more recent cases often
             row_idx = np.random.choice(len(cases), size=batch_size, replace=False)
             minibatch = [cases[i] for i in row_idx]
 

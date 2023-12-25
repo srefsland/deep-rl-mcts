@@ -18,7 +18,7 @@ class HexStateManager(StateManager):
         self.player = player
 
     def update_state(self, state, player):
-        self.board = copy.deepcopy(state)
+        self.board = state
         self.player = player
 
     def copy_state_manager(self):
@@ -27,12 +27,12 @@ class HexStateManager(StateManager):
         Returns:
             _type_: new state manager with the same state as the current one.
         """
-        return HexStateManager(player=self.player, board=copy.deepcopy(self.board))
+        return copy.deepcopy(self)
 
     # NOTE: only passes player as parameter to be able to generalize for all types of state manager in 2v2 board games.
     # In Hex, the available moves are the same for both players.
     def get_legal_moves(self, player=None):
-        """Fetches the legal moves for the current player, which is the empty cells.
+        """Fetches the legal moves for the current player, which are the empty cells.
 
         Args:
             player (int, optional): The player to get the moves for. Defaults to None.
@@ -96,29 +96,24 @@ class HexStateManager(StateManager):
         return move
 
     def generate_child_states(self, player=None):
-        """Generates all the possible child state of the current state of the game.
+        """Generates all the child states of the current state.
 
         Args:
-            player (tuple[int, int]), optional): the player that is to move. Defaults to None.
+            player (int, optional): the player of the current state. Defaults to None.
 
-        Returns:
-            zip: the child states along with what move changed it.
+        Yields:
+            tuple: child board, child player and move that was made to get to the child board.
         """
         if player is None:
             player = self.player
 
-        child_states = []
-        child_player = []
         moves = self.get_legal_moves()
 
         for move in moves:
             state_manager = self.copy_state_manager()
             state_manager.make_move(move, player)
-            child_states.append(state_manager.board)
-            child_player.append(state_manager.player)
-
-        # Just makes it easier to keep track of what move was made to get to the child state
-        return zip(child_states, child_player, moves)
+            
+            yield state_manager.board, state_manager.player, move
 
     def check_winning_state(self, player=None):
         """Checks if there is a win in the current state of the board.
@@ -179,47 +174,9 @@ class HexStateManager(StateManager):
             int: the reward that depends on which player is the winner.
         """
         return 1 if winner == 1 else -1 if winner == -1 else 0
-
-    def get_visit_distribution(self, node):
-        """Gets the visit distribution of the children of the node it terms of nsa counts.
-
-        Args:
-            node (MCTSNode): the node associated with the current state.
-
-        Returns:
-            np.ndarray: the visit distribution.
-        """
-        visit_distribution = np.zeros((self.board_size, self.board_size))
-
-        for child in node.children:
-            visit_distribution[child.move] = child.n
-
-        # Avoid division by zero
-        if np.sum(visit_distribution) > 0:
-            visit_distribution = visit_distribution / np.sum(visit_distribution)
-
-        visit_distribution = np.expand_dims(visit_distribution.flatten(), axis=0)
-        return visit_distribution
-
-    def get_winning_distribution(self, winning_moves):
-        """Gets the winning distribution if there are winning moves.
-
-        Args:
-            winning_moves (list(tuple[int, int])): the list of winning move(s).
-
-        Returns:
-            np.ndarray: the winning distribution.
-        """
-        visit_distribution = np.zeros((self.board_size, self.board_size))
-
-        for move in winning_moves:
-            visit_distribution[move] = 1
-
-        # Normalize to 1
-        visit_distribution = visit_distribution / np.sum(visit_distribution)
-
-        visit_distribution = np.expand_dims(visit_distribution.flatten(), axis=0)
-        return visit_distribution
+    
+    def get_distribution_shape(self):
+        return np.zeros((self.board_size, self.board_size))
 
     def print_board(self):
         """Prints the current state of the board to the terminal. Mostly for debugging purposes."""
@@ -240,7 +197,7 @@ class HexStateManager(StateManager):
         Returns:
             np.ndarray: the newly created board.
         """
-        board = np.array([[0 for _ in range(board_size)] for _ in range(board_size)])
+        board = np.zeros((board_size, board_size))
 
         return board
 
@@ -264,7 +221,7 @@ class HexStateManager(StateManager):
             if node[0] == self.board_size - 1:
                 return True
 
-            neighbors = self._expand_neighbors(node, 1)
+            neighbors = self._expand_neighbors(node, player=1)
 
             for neighbor in neighbors:
                 if neighbor not in nodes_to_visit and neighbor not in nodes_visited:
@@ -292,7 +249,7 @@ class HexStateManager(StateManager):
             if node[1] == self.board_size - 1:
                 return True
 
-            neighbors = self._expand_neighbors(node, -1)
+            neighbors = self._expand_neighbors(node, player=-1)
 
             for neighbor in neighbors:
                 if neighbor not in nodes_to_visit and neighbor not in nodes_visited:

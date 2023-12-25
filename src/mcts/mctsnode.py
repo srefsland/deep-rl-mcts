@@ -4,7 +4,7 @@ class MCTSNode:
         self.state = state
         self.player = player
         self.children = None
-        self.q = 0
+        self.e = 0
         self.n = 0
         # The move that led to this node
         self.move = move
@@ -16,8 +16,7 @@ class MCTSNode:
             reward (int): the reward that is backpropagated.
         """
         self.n += 1
-        # The closer the Q(s, a) value to the reward, the less the Q(s, a) value will change
-        self.q += (reward - self.q) / self.n
+        self.e += reward
 
     def is_leaf_node(self):
         """Checks if the node is a leaf node (no children).
@@ -34,3 +33,11 @@ class MCTSNode:
             bool: True if the node is root, False otherwise.
         """
         return self.parent is None
+    
+    def get_qsa(self):
+        """Gets the Q(s, a) value for the node.
+
+        Returns:
+            float: the Q(s, a) value.
+        """
+        return self.e / self.n if self.n > 0 else 0

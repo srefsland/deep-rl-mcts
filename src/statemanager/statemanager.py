@@ -46,9 +46,5 @@ class StateManager(ABC):
         pass
 
     @abstractmethod
-    def get_visit_distribution(self, node):
-        pass
-
-    @abstractmethod
-    def get_winning_distribution(self, winning_moves):
+    def get_distribution_shape(self):
         pass
