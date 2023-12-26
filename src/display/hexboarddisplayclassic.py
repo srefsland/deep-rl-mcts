@@ -170,8 +170,9 @@ class HexBoardDisplayClassic(GameBoardDisplay):
                         edgecolor=BLACK,
                         alpha=0.8,
                     )
-                    
-                num_pos = i * len(board) + j
+                
+                letter = chr(ord("A") + j)
+                num_pos = f"{letter}{i + 1}"
                 # This just enlarges the newest node, to make it easier to see what moves are taken.
                 self.ax.add_patch(hex_patch)
                 self.ax.text(posX, posY, num_pos, ha="center", va="center", fontsize=70/len(board))

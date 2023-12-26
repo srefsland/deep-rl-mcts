@@ -19,7 +19,10 @@ def play_versus_actor(actor, board_display, board_size=4, best_move=True, player
             if config.CLASSIC_DISPLAY:
                 x = input("Enter position: ")
                 
-                move = (int(x)//board_size, int(x)%board_size)
+                j = ord(x[0].upper()) - ord("A")
+                i = int(x[1]) - 1
+                move = (i, j)
+                
             else:
                 x = input("Enter x: ")
                 y = input("Enter y: ")
