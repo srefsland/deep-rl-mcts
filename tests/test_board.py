@@ -64,9 +64,27 @@ def test_move_making():
     assert board.board[0][0] == -1
     assert board.player == 1
 
-    with pytest.raises(Exception):
-        board.make_move((0, 0), -1)
-
     board.make_move((0, 1), 1)
     assert board.board[0][1] == 1
     assert board.player == -1
+    
+def test_switch_rule():
+    board = HexStateManager(4, switch_rule_allowed=True)
+    
+    board.make_move((0, 0))
+    assert board.player == -1
+    assert board.switched == False
+    
+    assert len([_ for _ in board.generate_child_states()]) == 16
+    
+    board.make_move((0, 0))
+    assert board.player == -1
+    assert board.switched == True
+    
+    assert len([_ for _ in board.generate_child_states()]) == 15
+    
+    with pytest.raises(Exception):
+        board.make_move((0, 0))
+    
+    board.make_move((0, 1))
+    assert board.player == 1

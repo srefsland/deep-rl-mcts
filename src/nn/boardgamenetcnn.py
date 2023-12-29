@@ -9,7 +9,6 @@ class BoardGameNetCNN:
     def __init__(
         self,
         convolutional_layers=(32, 64),
-        neural_network_dimensions=(64, 32),
         lr=0.001,
         activation="relu",
         output_activation_actor="softmax",
@@ -22,7 +21,6 @@ class BoardGameNetCNN:
         saved_model=None,
     ):
         self.convolutional_layers = convolutional_layers
-        self.neural_network_dimensions = neural_network_dimensions
         self.lr = lr
         self.activation = nn_options.activation_functions[activation]
         self.output_activation_actor = nn_options.activation_functions[

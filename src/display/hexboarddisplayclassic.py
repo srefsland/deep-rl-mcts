@@ -182,7 +182,8 @@ class HexBoardDisplayClassic(GameBoardDisplay):
             # Increase Y by vertical spacing after each row is complete.
             posY -= vertical_spacing
 
-        plt.title("Hex", fontsize=20)
+        title = "Hex" if not state.switched else "Hex (Switched)"
+        plt.title(title, fontsize=20)
 
         if winner is not None:
             # Update title to the winner if there is one.

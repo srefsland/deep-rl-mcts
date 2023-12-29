@@ -14,6 +14,8 @@ from mcts.mcts import MCTS
 from nn.boardgamenetcnn import BoardGameNetCNN
 from statemanager.hexstatemanager import HexStateManager
 
+import cProfile
+import pstats
 
 def rl_algorithm(actor, state_manager, mcts_state_manager, display):
     """The reinforcement learning algorithm.
@@ -57,6 +59,7 @@ def rl_algorithm(actor, state_manager, mcts_state_manager, display):
             ):
                 i += 1
                 mcts_tree.simulation_iteration(actor)
+                
             logging.info(f"Number of simulations: {i}, time: {(time.time() - start_time):.2f} seconds")
 
             moves += 1
@@ -100,7 +103,6 @@ def rl_algorithm(actor, state_manager, mcts_state_manager, display):
 if __name__ == "__main__":
     nn = BoardGameNetCNN(
         convolutional_layers=config.CNN_FILTERS,
-        neural_network_dimensions=config.NEURAL_NETWORK_DIMENSIONS,
         lr=config.LEARNING_RATE,
         activation=config.ACTIVATION_FUNCTION,
         output_activation_actor=config.OUTPUT_ACTIVATION_FUNCTION_ACTOR,
@@ -110,8 +112,8 @@ if __name__ == "__main__":
         optimizer=config.ANN_OPTIMIZER,
         board_size=config.BOARD_SIZE,
     )
-    state_manager = HexStateManager(config.BOARD_SIZE)
-    mcts_state_manager = HexStateManager(config.BOARD_SIZE)
+    state_manager = HexStateManager(config.BOARD_SIZE, switch_rule_allowed=config.SWICH_RULE_ALLOWED)
+    mcts_state_manager = HexStateManager(config.BOARD_SIZE, switch_rule_allowed=config.SWICH_RULE_ALLOWED)
     display = None if not config.DISPLAY_GAME_RL else HexBoardDisplayClassic() if config.CLASSIC_DISPLAY else HexBoardDisplay()
     actor = Actor(
         name="actor_rl",
@@ -124,3 +126,4 @@ if __name__ == "__main__":
         litemodel=None,
     )
     rl_algorithm(actor=actor, state_manager=state_manager, mcts_state_manager=mcts_state_manager, display=display)
+

@@ -55,7 +55,7 @@ class MCTS:
             # Perform rollout
             while not sim_state_manager.check_winning_state():
                 # Epsilon-greedy policy
-                move = actor.epsilon_greedy_policy(sim_state_manager.board, sim_state_manager.player)
+                move = actor.epsilon_greedy_policy(sim_state_manager.board, sim_state_manager.player, sim_state_manager.get_legal_moves())
                 sim_state_manager.make_move(move)
 
             # Winner should be the one that took the last move (the one that is not the current player)
@@ -196,26 +196,6 @@ class MCTS:
         # Avoid division by zero
         if np.sum(visit_distribution) > 0:
             visit_distribution = visit_distribution / np.sum(visit_distribution)
-
-        visit_distribution = np.expand_dims(visit_distribution.flatten(), axis=0)
-        return visit_distribution
-
-    def get_winning_distribution(self, winning_moves):
-        """Gets the winning distribution if there are winning moves.
-
-        Args:
-            winning_moves (list(tuple[int, int])): the list of winning move(s).
-
-        Returns:
-            np.ndarray: the winning distribution.
-        """
-        visit_distribution = self.state_manager.get_distribution_shape()
-
-        for move in winning_moves:
-            visit_distribution[move] = 1
-
-        # Normalize to 1
-        visit_distribution = visit_distribution / np.sum(visit_distribution)
 
         visit_distribution = np.expand_dims(visit_distribution.flatten(), axis=0)
         return visit_distribution

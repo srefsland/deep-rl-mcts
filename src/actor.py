@@ -24,11 +24,11 @@ class Actor:
         self.litemodel = litemodel
         
         
-    def epsilon_greedy_policy(self, state, player):
+    def epsilon_greedy_policy(self, state, player, legal_moves):
         if np.random.random() < self.epsilon:
-            move = self.predict_random_move(state, player)
+            move = self.predict_random_move(legal_moves)
         else:
-            move = self.predict_best_move(state, player)
+            move = self.predict_best_move(state, player, legal_moves)
         
         return move
             
@@ -45,24 +45,14 @@ class Actor:
         
         return prediction
     
-    def predict_random_move(self, state=None, player=None, model_input=None):
-        nn_input = (
-            self.nn.convert_to_nn_input(state, player)
-            if model_input is None
-            else model_input
-        )
-        
-        # Get the mask
-        mask = nn_input[0, :, :, 2].flatten()
-        
-        # Predict a random indice where the value is 1
-        indices = np.arange(len(mask))
-        move = np.random.choice(indices[mask == 1])
-        move = (move // self.board_size, move % self.board_size)
+    def predict_random_move(self, legal_moves):
+        # Get a random move from the legal moves set
+        legal_moves_list = list(legal_moves)
+        move = legal_moves_list[np.random.choice(len(legal_moves_list))]
         
         return move
         
-    def predict_best_move(self, state=None, player=None, model_input=None):
+    def predict_best_move(self, state=None, player=None, legal_moves=None):
         """Predicts the best move given the model input.
 
         Args:
@@ -72,19 +62,15 @@ class Actor:
         Returns:
             tuple[int, int]: the move to choose
         """
-        nn_input = (
-            self.nn.convert_to_nn_input(state, player)
-            if model_input is None
-            else model_input
-        )
-        predictions = self._predict_moves(nn_input)
+        nn_input = self.nn.convert_to_nn_input(state, player)
+        predictions = self._predict_moves(nn_input, legal_moves)
 
         prediction = np.argmax(predictions)
         move = (prediction // self.board_size, prediction % self.board_size)
 
         return move
 
-    def predict_probabilistic_move(self, state=None, player=None, model_input=None):
+    def predict_probabilistic_move(self, state=None, player=None, legal_moves=None):
         """Predicts the move according to the probability distribution given by the model.
 
         Args:
@@ -94,13 +80,9 @@ class Actor:
         Returns:
             tuple[int, int]: the move to choose
         """
-        nn_input = (
-            self.nn.convert_to_nn_input(state, player)
-            if model_input is None
-            else model_input
-        )
+        nn_input = self.nn.convert_to_nn_input(state, player)
 
-        moves = self._predict_moves(nn_input).flatten()
+        moves = self._predict_moves(nn_input, legal_moves).flatten()
         indices = np.arange(len(moves))
 
         move = np.random.choice(indices, p=moves)
@@ -108,7 +90,7 @@ class Actor:
 
         return move
     
-    def _predict_moves(self, X):
+    def _predict_moves(self, X, legal_moves):
         """Predicts the output of the neural network given the input.
         Uses the __call__ method of the model, which is faster than using the predict method.
 
@@ -118,25 +100,22 @@ class Actor:
         Returns:
             np.ndarray: the predictions for each cell
         """
-        mask = X[0, :, :, 2].flatten()
         # Convert to tensor
         if self.litemodel is None:
             prediction = self.nn.call_actor(X)
         else:
             prediction = self.litemodel.predict_single(np.squeeze(X, axis=0))
 
-        prediction_occupied_removed = prediction * mask
+        for i in range(len(prediction)):
+            move = (i // self.board_size, i % self.board_size)
+            if move not in legal_moves:
+                prediction[i] = 0
 
-        sum_prediction = np.sum(prediction_occupied_removed)
+        sum_prediction = np.sum(prediction)
         # If the sum of the prediction is zero, then the mask is used as a fallback
         # to still return a valid move. This can happen when the model predicts something
         # to be zero.
-        if sum_prediction == 0:
-            prediction_occupied_removed = mask
-            predictions_normalized = prediction_occupied_removed / \
-                np.sum(prediction_occupied_removed)
-        else:
-            predictions_normalized = prediction_occupied_removed / sum_prediction
+        predictions_normalized = prediction / max(sum_prediction, 1e-6)
         return predictions_normalized.reshape((self.board_size, self.board_size))
     
     def create_lite_model(self):

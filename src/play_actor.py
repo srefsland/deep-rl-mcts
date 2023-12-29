@@ -7,7 +7,7 @@ from statemanager.hexstatemanager import HexStateManager
 
 
 def play_versus_actor(actor, board_display, board_size=4, best_move=True, player1=True):
-    board = HexStateManager(board_size=board_size)
+    board = HexStateManager(board_size=board_size, )
 
     new_move = None
     is_terminal = False
@@ -15,7 +15,8 @@ def play_versus_actor(actor, board_display, board_size=4, best_move=True, player
         board_display.display_board(board, delay=0.5, newest_move=new_move)
         current_player = board.player
 
-        if current_player == 1 and player1 or current_player == -1 and not player1:
+        # If switch player, then we need to switch the player for the actor as well
+        if current_player == 1 and player1 and not board.switched:
             if config.CLASSIC_DISPLAY:
                 x = input("Enter position: ")
                 
@@ -30,9 +31,9 @@ def play_versus_actor(actor, board_display, board_size=4, best_move=True, player
                 move = (int(x), int(y))
         else:
             if best_move:
-                move = actor.predict_best_move(board.board, board.player)
+                move = actor.predict_best_move(board.board, board.player, board.legal_moves)
             else:
-                move = actor.predict_probabilistic_move(board.board, board.player)
+                move = actor.predict_probabilistic_move(board.board, board.player, board.legal_moves)
 
         new_move = board.make_move(move)
         is_terminal = board.check_winning_state(current_player)

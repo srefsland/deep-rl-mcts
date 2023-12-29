@@ -6,10 +6,6 @@ from abc import ABC, abstractmethod
 
 class StateManager(ABC):
     @abstractmethod
-    def update_state(self, state, player):
-        pass
-
-    @abstractmethod
     def copy_state_manager(self):
         pass
 

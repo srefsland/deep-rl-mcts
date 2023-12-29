@@ -3,32 +3,22 @@ import copy
 import numpy as np
 
 from .statemanager import StateManager
-
+import pickle
 
 class HexStateManager(StateManager):
-    def __init__(self, board_size=6, player=1, board=None):
-        if board is None:
-            self.board = self._initialize_state(board_size)
-            self.board_size = board_size
-        else:
-            self.board = board
-            self.board_size = len(board)
-
-        # Whose turn it is
-        self.player = player
-
-    def update_state(self, state, player):
-        self.board = state
-        self.player = player
+    def __init__(self, board_size=6, **kwargs):
+        self.switch_rule_allowed = kwargs.get("switch_rule_allowed", True)
+        self.board_size = board_size
+        self._initialize_state(board_size)
 
     def copy_state_manager(self):
         """Creates a deep copy of the current state of the game.
 
         Returns:
-            _type_: new state manager with the same state as the current one.
+            HexStateManager: new state manager with the same state as the current one.
         """
-        return copy.deepcopy(self)
-
+        return pickle.loads(pickle.dumps(self))
+        
     # NOTE: only passes player as parameter to be able to generalize for all types of state manager in 2v2 board games.
     # In Hex, the available moves are the same for both players.
     def get_legal_moves(self, player=None):
@@ -40,14 +30,7 @@ class HexStateManager(StateManager):
         Returns:
             list[tuple[int, int]]: the current legal moves, represented as (x, y) coordinates.
         """
-        moves = []
-
-        for row in range(self.board_size):
-            for col in range(self.board_size):
-                if self.board[row][col] == 0:
-                    moves.append((row, col))
-
-        return moves
+        return self.legal_moves
 
     def make_move(self, move, player=None):
         """Update the game state by making the provided move.
@@ -65,12 +48,27 @@ class HexStateManager(StateManager):
         if player is None:
             player = self.player
 
-        if self._is_within_bounds(move[0], move[1]) and self.board[move] == 0:
-            self.board[move] = player
-        else:
+        if move not in self.legal_moves:
             raise Exception("Illegal move")
+        
+        if len(self.move_history) > 1:
+            self.legal_moves.remove(move)
+        elif len(self.move_history) == 1:
+            if move in self.moves_made:
+                self.legal_moves.remove(move)
+                self.switched = True
+            else:
+                self.legal_moves -= self.moves_made
+                self.legal_moves.remove(move)
+        elif len(self.move_history) == 0 and not self.switch_rule_allowed:
+            self.legal_moves.remove(move)
+        
+        self.moves_made.update([move])
+        self.move_history.append((move, player))
 
-        self.player = -1 if player == 1 else 1
+        if not (len(self.move_history) == 2 and self.switched):
+            self.board[move[0]][move[1]] = player
+            self.player = -1 if player == 1 else 1
 
         return move
 
@@ -161,8 +159,7 @@ class HexStateManager(StateManager):
         return None if len(winning_moves) == 0 else winning_moves
 
     def reset(self):
-        self.board = self._initialize_state(self.board_size)
-        self.player = 1
+        self._initialize_state(self.board_size)
 
     def get_eval(self, winner=1):
         """Passes the reward associated with a terminated game.
@@ -173,7 +170,7 @@ class HexStateManager(StateManager):
         Returns:
             int: the reward that depends on which player is the winner.
         """
-        return 1 if winner == 1 else -1 if winner == -1 else 0
+        return winner if not self.switched else -winner
     
     def get_distribution_shape(self):
         return np.zeros((self.board_size, self.board_size))
@@ -197,9 +194,12 @@ class HexStateManager(StateManager):
         Returns:
             np.ndarray: the newly created board.
         """
-        board = np.zeros((board_size, board_size))
-
-        return board
+        self.board = np.zeros((board_size, board_size))
+        self.switched = False
+        self.legal_moves = set([(i, j) for j in range(board_size) for i in range(board_size)])
+        self.moves_made = set()
+        self.move_history = []
+        self.player = 1
 
     def _check_winning_state_player1(self):
         """Checks the winning state of player 1.
@@ -296,10 +296,7 @@ class HexStateManager(StateManager):
         neighbors = []
 
         for neighbor in neighbors_coords:
-            if (
-                self._is_within_bounds(neighbor[0], neighbor[1])
-                and self.board[neighbor[0]][neighbor[1]] == player
-            ):
+            if (neighbor, player) in self.move_history:
                 neighbors.append(neighbor)
 
         return neighbors
