@@ -14,7 +14,7 @@ from statemanager.hexstatemanager import HexStateManager
 def run_tournament(
     actors, state_manager, display, num_games=25, board_size=4, temperature=1.0
 ):
-    """Run the TOPP tournament for different actors.
+    """Run tournament for different actors.
 
     Args:
         actors (list[Actor]): the actors of different playing strengths.
@@ -102,10 +102,11 @@ def run_game(
         else:
             current_player = state_manager.player
 
-            if current_player == 1:
-                move = actor1.predict_best_move(state=state_manager.board, player=state_manager.player)
+            if (current_player == 1 and not state_manager.switched 
+                or current_player == -1 and state_manager.switched):
+                move = actor1.predict_best_move(state=state_manager.board, player=state_manager.player, legal_moves=state_manager.legal_moves)
             else:
-                move = actor2.predict_best_move(state=state_manager.board, player=state_manager.player)
+                move = actor2.predict_best_move(state=state_manager.board, player=state_manager.player, legal_moves=state_manager.legal_moves)
 
             move = state_manager.make_move(move)
 
@@ -122,14 +123,14 @@ def run_game(
                 actor2=actor2.name,
             )
 
-    winner = current_player
+    winner = current_player if not state_manager.switched else -current_player
 
     return winner
 
 
 if __name__ == "__main__":
     display = HexBoardDisplayClassic() if config.CLASSIC_DISPLAY else HexBoardDisplay()
-    state_manager = HexStateManager(board_size=config.BOARD_SIZE)
+    state_manager = HexStateManager(board_size=config.BOARD_SIZE, switch_rule_allowed=config.SWITCH_RULE_ALLOWED)
 
     save_interval = config.SAVE_INTERVAL
 

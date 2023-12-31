@@ -106,6 +106,8 @@ class Actor:
         else:
             prediction = self.litemodel.predict_single(np.squeeze(X, axis=0))
 
+        prediction = np.squeeze(prediction, axis=0)
+        
         for i in range(len(prediction)):
             move = (i // self.board_size, i % self.board_size)
             if move not in legal_moves:

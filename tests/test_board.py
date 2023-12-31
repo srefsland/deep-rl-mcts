@@ -88,3 +88,6 @@ def test_switch_rule():
     
     board.make_move((0, 1))
     assert board.player == 1
+    
+    with pytest.raises(Exception):
+        board.make_move((0, 1))

@@ -1,9 +1,10 @@
-import copy
+import pickle
 
 import numpy as np
+from disjoint_set import DisjointSet
 
 from .statemanager import StateManager
-import pickle
+
 
 class HexStateManager(StateManager):
     def __init__(self, board_size=6, **kwargs):
@@ -68,7 +69,15 @@ class HexStateManager(StateManager):
 
         if not (len(self.move_history) == 2 and self.switched):
             self.board[move[0]][move[1]] = player
-            self.player = -1 if player == 1 else 1
+            
+            neighbors = self._expand_neighbors(move, player)
+            for neighbor in neighbors:
+                if player == 1:
+                    self.disjoint_set_red.union(neighbor, move)
+                else:
+                    self.disjoint_set_blue.union(neighbor, move)
+        
+            self.player = -player
 
         return move
 
@@ -89,7 +98,7 @@ class HexStateManager(StateManager):
         if len(moves) == 0:
             return
 
-        move = self.make_move(moves[np.random.randint(0, len(moves))], player)
+        move = self.make_move(list(moves)[np.random.randint(0, len(moves))], player)
 
         return move
 
@@ -111,7 +120,9 @@ class HexStateManager(StateManager):
             state_manager = self.copy_state_manager()
             state_manager.make_move(move, player)
             
-            yield state_manager.board, state_manager.player, move
+            node_player = state_manager.player if not state_manager.switched else -state_manager.player
+            
+            yield state_manager.board, node_player, move
 
     def check_winning_state(self, player=None):
         """Checks if there is a win in the current state of the board.
@@ -131,32 +142,6 @@ class HexStateManager(StateManager):
                 self._check_winning_state_player1()
                 or self._check_winning_state_player2()
             )
-
-    def get_winning_moves(self, player=None):
-        """Checks if some of the child states results in a win. Useful for
-        shortening the number of moves in each episode.
-
-        Args:
-            player (int, optional): the player to check winning move for. Defaults to None.
-
-        Returns:
-            list[tuple[int, int]]: the moves that results in a win, None if there are none that results in a win.
-        """
-        if player is None:
-            player = self.player
-
-        moves = self.get_legal_moves()
-        winning_moves = []
-
-        for move in moves:
-            child_board = self.copy_state_manager()
-
-            child_board.make_move(move, player)
-
-            if child_board.check_winning_state(player):
-                winning_moves.append(move)
-
-        return None if len(winning_moves) == 0 else winning_moves
 
     def reset(self):
         self._initialize_state(self.board_size)
@@ -200,6 +185,21 @@ class HexStateManager(StateManager):
         self.moves_made = set()
         self.move_history = []
         self.player = 1
+        
+        self.top_node = (-1, 0)
+        self.bottom_node = (board_size, 0)
+        self.left_node = (0, -1)
+        self.right_node = (0, board_size)
+        
+        cells = [(i, j) for j in range(board_size) for i in range(board_size)]
+        self.disjoint_set_red = DisjointSet(cells + [self.top_node, self.bottom_node])
+        self.disjoint_set_blue = DisjointSet(cells + [self.left_node, self.right_node])
+        
+        for i in range(board_size):
+            self.disjoint_set_red.union((0, i), self.top_node)
+            self.disjoint_set_red.union((board_size-1, i), self.bottom_node)
+            self.disjoint_set_blue.union((i, 0), self.left_node)
+            self.disjoint_set_blue.union((i, board_size-1), self.right_node)
 
     def _check_winning_state_player1(self):
         """Checks the winning state of player 1.
@@ -207,27 +207,7 @@ class HexStateManager(StateManager):
         Returns:
             bool: true if player 1 has won, false if not.
         """
-        nodes_to_visit = []
-        nodes_visited = []
-
-        for col in range(len(self.board[0])):
-            if self.board[0][col] == 1:
-                nodes_to_visit.append((0, col))
-
-        while len(nodes_to_visit) > 0:
-            node = nodes_to_visit.pop()
-            nodes_visited.append(node)
-
-            if node[0] == self.board_size - 1:
-                return True
-
-            neighbors = self._expand_neighbors(node, player=1)
-
-            for neighbor in neighbors:
-                if neighbor not in nodes_to_visit and neighbor not in nodes_visited:
-                    nodes_to_visit.append(neighbor)
-
-        return False
+        return self.disjoint_set_red.find(self.top_node) == self.disjoint_set_red.find(self.bottom_node)
 
     def _check_winning_state_player2(self):
         """Checks the winning state of player 2.
@@ -235,39 +215,7 @@ class HexStateManager(StateManager):
         Returns:
             bool: true if player 2 has won, false if not.
         """
-        nodes_to_visit = []
-        nodes_visited = []
-
-        for row in range(len(self.board)):
-            if self.board[row][0] == -1:
-                nodes_to_visit.append((row, 0))
-
-        while len(nodes_to_visit) > 0:
-            node = nodes_to_visit.pop()
-            nodes_visited.append(node)
-
-            if node[1] == self.board_size - 1:
-                return True
-
-            neighbors = self._expand_neighbors(node, player=-1)
-
-            for neighbor in neighbors:
-                if neighbor not in nodes_to_visit and neighbor not in nodes_visited:
-                    nodes_to_visit.append(neighbor)
-
-        return False
-
-    def _is_within_bounds(self, row, col):
-        """Ensures that the current row and column are within the bounds of the board.
-
-        Args:
-            row (int): the row index.
-            col (int): the column index.
-
-        Returns:
-            bool: true if within bounds, false if not.
-        """
-        return row >= 0 and row < self.board_size and col >= 0 and col < self.board_size
+        return self.disjoint_set_blue.find(self.left_node) == self.disjoint_set_blue.find(self.right_node)
 
     def _expand_neighbors(self, cell, player=None):
         """Finds neighbors that connect to the current node. Used to determine if the state is terminal (game over).
@@ -294,9 +242,11 @@ class HexStateManager(StateManager):
         ]
 
         neighbors = []
+        # Select everyone but index 1
+        move_history = self.move_history if not self.switched else self.move_history[0:1] + self.move_history[2:]
 
         for neighbor in neighbors_coords:
-            if (neighbor, player) in self.move_history:
+            if (neighbor, player) in move_history:
                 neighbors.append(neighbor)
 
         return neighbors

@@ -14,9 +14,6 @@ from mcts.mcts import MCTS
 from nn.boardgamenetcnn import BoardGameNetCNN
 from statemanager.hexstatemanager import HexStateManager
 
-import cProfile
-import pstats
-
 def rl_algorithm(actor, state_manager, mcts_state_manager, display):
     """The reinforcement learning algorithm.
 
@@ -32,7 +29,7 @@ def rl_algorithm(actor, state_manager, mcts_state_manager, display):
 
     replay_buf = replay_buffer.ReplayBuffer(maxlen=config.REPLAY_BUFFER_SIZE)
     i_s = config.SAVE_INTERVAL
-    time_stamp = datetime.now()
+    time_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     replay_buf.clear()
 
     for g_a in tqdm(range(config.NUM_EPISODES + 1)):
@@ -112,8 +109,8 @@ if __name__ == "__main__":
         optimizer=config.ANN_OPTIMIZER,
         board_size=config.BOARD_SIZE,
     )
-    state_manager = HexStateManager(config.BOARD_SIZE, switch_rule_allowed=config.SWICH_RULE_ALLOWED)
-    mcts_state_manager = HexStateManager(config.BOARD_SIZE, switch_rule_allowed=config.SWICH_RULE_ALLOWED)
+    state_manager = HexStateManager(config.BOARD_SIZE, switch_rule_allowed=config.SWITCH_RULE_ALLOWED)
+    mcts_state_manager = HexStateManager(config.BOARD_SIZE, switch_rule_allowed=config.SWITCH_RULE_ALLOWED)
     display = None if not config.DISPLAY_GAME_RL else HexBoardDisplayClassic() if config.CLASSIC_DISPLAY else HexBoardDisplay()
     actor = Actor(
         name="actor_rl",
@@ -126,4 +123,3 @@ if __name__ == "__main__":
         litemodel=None,
     )
     rl_algorithm(actor=actor, state_manager=state_manager, mcts_state_manager=mcts_state_manager, display=display)
-

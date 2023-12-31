@@ -7,7 +7,7 @@ from statemanager.hexstatemanager import HexStateManager
 
 
 def play_versus_actor(actor, board_display, board_size=4, best_move=True, player1=True):
-    board = HexStateManager(board_size=board_size, )
+    board = HexStateManager(board_size=board_size)
 
     new_move = None
     is_terminal = False
@@ -16,7 +16,10 @@ def play_versus_actor(actor, board_display, board_size=4, best_move=True, player
         current_player = board.player
 
         # If switch player, then we need to switch the player for the actor as well
-        if current_player == 1 and player1 and not board.switched:
+        if (current_player == 1 and player1 and not board.switched 
+            or current_player == -1 and not player1 and not board.switched
+            or current_player == 1 and not player1 and board.switched
+            or current_player == -1 and player1 and board.switched):
             if config.CLASSIC_DISPLAY:
                 x = input("Enter position: ")
                 
@@ -41,7 +44,7 @@ def play_versus_actor(actor, board_display, board_size=4, best_move=True, player
     board_display.display_board(board, delay=0.5, winner=current_player)
 
 if __name__ == "__main__":
-    actor_episodes = 200
+    actor_episodes = 150
 
     saved_model = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{actor_episodes}"
     model = BoardGameNetCNN(board_size=config.BOARD_SIZE, bridge_features=config.BRIDGE_FEATURES, saved_model=saved_model)

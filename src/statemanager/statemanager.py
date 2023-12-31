@@ -28,10 +28,6 @@ class StateManager(ABC):
     @abstractmethod
     def check_winning_state(self, player):
         pass
-
-    @abstractmethod
-    def get_winning_moves(self, player):
-        pass
         
     @abstractmethod
     def reset(self):
