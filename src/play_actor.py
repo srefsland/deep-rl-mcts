@@ -44,7 +44,7 @@ def play_versus_actor(actor, board_display, board_size=4, best_move=True, player
     board_display.display_board(board, delay=0.5, winner=current_player)
 
 if __name__ == "__main__":
-    actor_episodes = 150
+    actor_episodes = 300
 
     saved_model = f"{config.MODEL_DIR}/model_{config.BOARD_SIZE}x{config.BOARD_SIZE}_{actor_episodes}"
     model = BoardGameNetCNN(board_size=config.BOARD_SIZE, bridge_features=config.BRIDGE_FEATURES, saved_model=saved_model)

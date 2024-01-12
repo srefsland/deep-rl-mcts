@@ -13,7 +13,7 @@ PX = 1 / plt.rcParams["figure.dpi"]
 
 
 class HexBoardDisplayClassic(GameBoardDisplay):
-    def __init__(self, width=700, height=700):
+    def __init__(self, width=800, height=700):
         self.init = False
         self.width = width
         self.height = height
