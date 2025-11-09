@@ -200,3 +200,5 @@ mcts_simulation_stats.prof
 .DS_Store
 training_samples
 */test.py
+config.yml
+*/debug.py

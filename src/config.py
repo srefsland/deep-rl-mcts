@@ -1,42 +1,43 @@
-# Board config
-BOARD_SIZE = 7
-CLASSIC_DISPLAY = True
-SWITCH_RULE_ALLOWED = True
+import yaml
+from pathlib import Path
 
-# MCTS config
-MCTS_DYNAMIC_SIMS_TIME = 4.0
-MCTS_MIN_SIMULATIONS = 2000
-MTCS_C = 1.3
-EPSILON = 1.0
-EPSILON_DECAY = 0.99
-EPSILON_CRITIC = 2.0
-EPSILON_DECAY_CRITIC = 0.996
+# Read config.yml and expose top-level constants expected by the project.
+_CFG_PATH = Path(__file__).resolve().parent / "config.yml"
+_cfg = yaml.safe_load(_CFG_PATH.read_text())
 
-# RL config
-NUM_EPISODES = 500
-DISPLAY_GAME_RL = True
-DISPLAY_GAME_RL_INTERVAL = 10
-REPLAY_BUFFER_SIZE = 2048
-MINI_BATCH_SIZE = 256
-SAVE_INTERVAL = 50
-SELECT_BEST_MOVE_RL = True
+# Board
+BOARD_SIZE = _cfg["board"]["size"]
+CLASSIC_DISPLAY = _cfg["board"]["classic_display"]
 
-# ANN config
-LEARNING_RATE = 0.001
-CNN_FILTERS = (64, 64, 64, 64, 64)
-ACTIVATION_FUNCTION = "relu"
-OUTPUT_ACTIVATION_FUNCTION_ACTOR = "softmax"
-OUTPUT_ACTIVATION_FUNCTION_CRITIC = "tanh"
-ANN_OPTIMIZER = "Adam"
-LOSS_FUNCTION_ACTOR = "categorical_crossentropy"
-LOSS_FUNCTION_CRITIC = "mse"
-NUM_EPOCHS = 5
-BRIDGE_FEATURES = False
-USE_CRITIC = False
+# MCTS
+MCTS_DYNAMIC_SIMS_TIME = _cfg["mcts"]["dynamic_sims_time"]
+MCTS_MIN_SIMULATIONS = _cfg["mcts"]["min_simulations"]
+MTCS_C = _cfg["mcts"]["c"]
+EPSILON = _cfg["mcts"]["epsilon"]
+EPSILON_DECAY = _cfg["mcts"]["epsilon_decay"]
+EPSILON_CRITIC = _cfg["mcts"]["epsilon_critic"]
+EPSILON_DECAY_CRITIC = _cfg["mcts"]["epsilon_decay_critic"]
 
-# TOPP
-MODEL_DIR = "models/2023-12-30_16-09-29"
-TOPP_TEMPERATURE = 1.0
-TOPP_NUM_GAMES = 30
-TOPP_VERBOSE = True
-TOPP_DISPLAY_GAMES = True
+# RL
+NUM_EPISODES = _cfg["rl"]["num_episodes"]
+DISPLAY_GAME_RL = _cfg["rl"]["display_game_rl"]
+DISPLAY_GAME_RL_INTERVAL = _cfg["rl"]["display_game_rl_interval"]
+REPLAY_BUFFER_SIZE = _cfg["rl"]["replay_buffer_size"]
+MINI_BATCH_SIZE = _cfg["rl"]["mini_batch_size"]
+SAVE_INTERVAL = _cfg["rl"]["save_interval"]
+SELECT_BEST_MOVE_RL = _cfg["rl"]["select_best_move_rl"]
+
+# ANN
+LEARNING_RATE = _cfg["ann"]["learning_rate"]
+CNN_NUM_FILTERS = _cfg["ann"]["cnn_num_filters"]
+NUM_RES_BLOCKS = _cfg["ann"]["num_res_blocks"]
+ACTIVATION_FUNCTION = _cfg["ann"]["activation_function"]
+OUTPUT_ACTIVATION_FUNCTION_ACTOR = _cfg["ann"]["output_activation_actor"]
+OUTPUT_ACTIVATION_FUNCTION_CRITIC = _cfg["ann"]["output_activation_critic"]
+ANN_OPTIMIZER = _cfg["ann"]["optimizer"]
+LOSS_FUNCTION_ACTOR = _cfg["ann"]["loss_function_actor"]
+LOSS_FUNCTION_CRITIC = _cfg["ann"]["loss_function_critic"]
+NUM_EPOCHS = _cfg["ann"]["num_epochs"]
+BRIDGE_FEATURES = _cfg["ann"]["bridge_features"]
+USE_CRITIC = _cfg["ann"]["use_critic"]
+

@@ -5,10 +5,9 @@ import numpy as np
 
 
 def setup_node():
-    state_manager = HexStateManager(4, switch_rule_allowed=True)
-    nn = None
+    state_manager = HexStateManager(4)
 
-    tree = MCTS(state_manager, nn)
+    tree = MCTS(state_manager)
 
     return tree
 

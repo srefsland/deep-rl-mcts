@@ -1,8 +1,5 @@
 from abc import ABC, abstractmethod
 
-# Abstract class that is useful to check that the state manager is not specific to only Hex.
-# HexStateManager implements these abstract methods.
-
 
 class StateManager(ABC):
     @abstractmethod
@@ -10,25 +7,25 @@ class StateManager(ABC):
         pass
 
     @abstractmethod
-    def get_legal_moves(self, player):
+    def get_legal_moves(self, player_to_move):
         pass
 
     @abstractmethod
-    def make_move(self, move, player):
+    def make_move(self, move, player_to_move):
         pass
 
     @abstractmethod
-    def make_random_move(self, player):
+    def make_random_move(self, player_to_move):
         pass
 
     @abstractmethod
-    def generate_child_states(self, player):
+    def generate_child_states(self, player_to_move):
         pass
 
     @abstractmethod
-    def check_winning_state(self, player):
+    def check_winning_state(self, player_moved):
         pass
-        
+
     @abstractmethod
     def reset(self):
         pass
@@ -38,5 +35,6 @@ class StateManager(ABC):
         pass
 
     @abstractmethod
-    def get_distribution_shape(self):
+    def get_board_shape(self):
         pass
+
