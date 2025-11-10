@@ -150,7 +150,7 @@ class HexStateManager(StateManager):
         self._initialize_state(self.board_size)
 
     def get_eval(self, winner=1):
-        return winner if not self.switched else -winner
+        return winner
 
     def get_board_shape(self):
         return np.zeros((self.board_size, self.board_size))

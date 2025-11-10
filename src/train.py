@@ -106,8 +106,6 @@ def rl_algorithm(
                 else mcts_tree.select_random_best_distribution()
             )
 
-            # s_move = state_manager.first_move if state_manager.move_count == 1 else s_move
-
             state_manager.make_move(s_move)
             mcts_tree.prune_tree(s_move)
 
