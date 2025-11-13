@@ -1,5 +1,6 @@
 import pickle
 
+from utils.disjoint_set import DisjointSet
 import numpy as np
 
 from .exceptions import IllegalMoveException
@@ -16,16 +17,24 @@ class HexStateManager(StateManager):
         return pickle.loads(pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL))
 
     def copy_state_manager(self):
-        copied_state_manager = HexStateManager(self.board_size, initialize=False)
-        copied_state_manager.board = self.board.copy()
+        state_manager_copy = HexStateManager(self.board_size, initialize=False)
+        state_manager_copy.board = self.board.copy()
 
-        copied_state_manager.switched = self.switched
-        copied_state_manager.legal_moves = set(self.legal_moves)
-        copied_state_manager.first_move = self.first_move
-        copied_state_manager.move_count = self.move_count
-        copied_state_manager.player_to_move = self.player_to_move
+        state_manager_copy.switched = self.switched
+        state_manager_copy.legal_moves = set(self.legal_moves)
+        state_manager_copy.first_move = self.first_move
+        state_manager_copy.move_count = self.move_count
+        state_manager_copy.player_to_move = self.player_to_move
+        
+        state_manager_copy.top_node = self.top_node
+        state_manager_copy.bottom_node = self.bottom_node
+        state_manager_copy.left_node = self.left_node
+        state_manager_copy.right_node = self.right_node
+        
+        state_manager_copy.ds_player1 = self.ds_player1.copy()
+        state_manager_copy.ds_player2 = self.ds_player2.copy()
 
-        return copied_state_manager
+        return state_manager_copy
 
     # NOTE: only passes player as parameter to be able to generalize for all types of state manager in 2v2 board games.
     # In Hex, the available moves are the same for both players.
@@ -45,6 +54,7 @@ class HexStateManager(StateManager):
         if not is_first_move and not is_second_move:
             self.board[move] = player_to_move
             self.legal_moves.remove(move)
+            self._union_move(move, player_to_move)
         elif is_first_move:
             self.first_move = move
             self.board[move] = player_to_move
@@ -61,12 +71,16 @@ class HexStateManager(StateManager):
                     self.board[move] = player_to_move
 
                 self.legal_moves.remove(mirrored_move)
+                self._union_move(mirrored_move, player_to_move)
 
                 move = mirrored_move
             else:
                 self.board[move] = player_to_move
                 self.legal_moves.remove(move)
                 self.legal_moves.remove(self.first_move)
+                
+                self._union_move(move, player_to_move)
+                self._union_move(self.first_move, 1)
 
         self.move_count += 1
         self._change_player_to_move(player_to_move)
@@ -96,7 +110,7 @@ class HexStateManager(StateManager):
         )
 
         return move
-    
+
     def generate_child_states(self):
         for move in self.get_legal_moves():
             yield move, -self.player_to_move
@@ -131,11 +145,29 @@ class HexStateManager(StateManager):
         self.move_count = 0
         self.player_to_move = 1
 
+        self.top_node = (-1, 0)
+        self.bottom_node = (board_size, 0)
+        self.left_node = (0, -1)
+        self.right_node = (0, board_size)
+
+        all_board_positions = [
+            (i, j) for j in range(board_size) for i in range(board_size)
+        ]
+
+        self.ds_player1 = DisjointSet(all_board_positions + [self.top_node, self.bottom_node])
+        self.ds_player2 = DisjointSet(all_board_positions + [self.left_node, self.right_node])
+        
+        for i in range(board_size):
+            self.ds_player1.union(self.top_node, (0, i))
+            self.ds_player1.union(self.bottom_node, (board_size - 1, i))
+            self.ds_player2.union(self.left_node, (i, 0))
+            self.ds_player2.union(self.right_node, (i, board_size - 1))
+
     def _check_winning_state_player1(self):
-        return self._dfs(1)
+        return self.ds_player1.find(self.top_node) == self.ds_player1.find(self.bottom_node)
 
     def _check_winning_state_player2(self):
-        return self._dfs(-1)
+        return self.ds_player2.find(self.left_node) == self.ds_player2.find(self.right_node)
 
     def _expand_neighbors(self, cell, player_to_move=None):
         if player_to_move is None:
@@ -163,43 +195,18 @@ class HexStateManager(StateManager):
 
         return neighbors
 
-    def _dfs(self, player):
-        visited = set()
-        stack = []
+    def _union_move(self, move, player_to_move=None):
+        if player_to_move is None:
+            player_to_move = self.player_to_move
 
-        if player == 1:
-            for i in range(self.board_size):
-                if self.board[0, i] == 1:
-                    stack.append((0, i))
-                    visited.add((0, i))
+        neighbors = self._expand_neighbors(move, player_to_move)
 
-            while stack:
-                cell = stack.pop()
-                if cell[0] == self.board_size - 1:
-                    return True
-
-                for neighbor in self._expand_neighbors(cell, player):
-                    if neighbor not in visited:
-                        visited.add(neighbor)
-                        stack.append(neighbor)
-
+        if player_to_move == 1:
+            for neighbor in neighbors:
+                self.ds_player1.union(move, neighbor)
         else:
-            for i in range(self.board_size):
-                if self.board[i, 0] == -1:
-                    stack.append((i, 0))
-                    visited.add((i, 0))
-
-            while stack:
-                cell = stack.pop()
-                if cell[1] == self.board_size - 1:
-                    return True
-
-                for neighbor in self._expand_neighbors(cell, player):
-                    if neighbor not in visited:
-                        visited.add(neighbor)
-                        stack.append(neighbor)
-
-        return False
+            for neighbor in neighbors:
+                self.ds_player2.union(move, neighbor)
 
     def _is_within_bounds(self, cell):
         row, col = cell
