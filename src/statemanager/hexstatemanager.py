@@ -97,43 +97,9 @@ class HexStateManager(StateManager):
 
         return move
     
-    def generate_child_states(self, player_to_move=None):
-        if player_to_move is None:
-            player_to_move = self.player_to_move
-
+    def generate_child_states(self):
         for move in self.get_legal_moves():
-            child_state_manager = self.copy_state_manager()
-            
-            child_state_manager.make_move(move, player_to_move)
-            yield child_state_manager.board, child_state_manager.player_to_move, move
-
-    def generate_child_states2(self, player_to_move=None):
-        if player_to_move is None:
-            player_to_move = self.player_to_move
-
-        move_count = self.move_count
-        first_move = self.first_move
-
-        for move in self.get_legal_moves():
-            child_board = self.board.copy()
-
-            if move_count == 1:
-                if move == first_move:
-                    mirrored_move = (move[1], move[0])
-
-                    if mirrored_move != move:
-                        child_board[move] = 0
-                        child_board[mirrored_move] = player_to_move
-                    else:
-                        child_board[move] = player_to_move
-                else:
-                    child_board[move] = player_to_move
-            else:
-                child_board[move] = player_to_move
-
-            player_to_move_next = -player_to_move
-
-            yield child_board, player_to_move_next, move
+            yield move, -self.player_to_move
 
     def check_winning_state(self, player_moved=None):
         if player_moved == 1:

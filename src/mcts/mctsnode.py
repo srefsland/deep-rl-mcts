@@ -1,14 +1,13 @@
 class MCTSNode:
-    def __init__(self, state, player_to_move, move=None, parent=None):
+    def __init__(self, move=None, parent=None, player_to_move=None):
         self.parent = parent
-        self.state = state
-        self.player_to_move = player_to_move
         self.children = None
         # Accumulated rewards
         self.e = 0
         self.n = 0
         # The move that led to this node
         self.move = move
+        self.player_to_move = player_to_move
 
     def update_values(self, reward):
         self.n += 1
