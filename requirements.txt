@@ -2,5 +2,4 @@ matplotlib
 numpy
 torch
 tqdm
-disjoint-set
 pyyaml
