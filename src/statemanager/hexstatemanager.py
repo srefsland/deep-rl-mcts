@@ -1,22 +1,21 @@
-import pickle
+from typing import Any, Generator, Optional, Set, Tuple
+
+import numpy as np
 
 from utils.disjoint_set import DisjointSet
-import numpy as np
 
 from .exceptions import IllegalMoveException
 from .statemanager import StateManager
 
 
 class HexStateManager(StateManager):
-    def __init__(self, board_size=6, initialize=True):
+
+    def __init__(self, board_size: int = 7, initialize: bool = True) -> None:
         self.board_size = board_size
         if initialize:
             self._initialize_state(board_size)
 
-    def copy_state_manager2(self):
-        return pickle.loads(pickle.dumps(self, protocol=pickle.HIGHEST_PROTOCOL))
-
-    def copy_state_manager(self):
+    def copy_state_manager(self) -> "HexStateManager":
         state_manager_copy = HexStateManager(self.board_size, initialize=False)
         state_manager_copy.board = self.board.copy()
 
@@ -25,23 +24,25 @@ class HexStateManager(StateManager):
         state_manager_copy.first_move = self.first_move
         state_manager_copy.move_count = self.move_count
         state_manager_copy.player_to_move = self.player_to_move
-        
+
         state_manager_copy.top_node = self.top_node
         state_manager_copy.bottom_node = self.bottom_node
         state_manager_copy.left_node = self.left_node
         state_manager_copy.right_node = self.right_node
-        
+
         state_manager_copy.ds_player1 = self.ds_player1.copy()
         state_manager_copy.ds_player2 = self.ds_player2.copy()
 
         return state_manager_copy
 
-    # NOTE: only passes player as parameter to be able to generalize for all types of state manager in 2v2 board games.
-    # In Hex, the available moves are the same for both players.
-    def get_legal_moves(self, player_to_move=None):
+    def get_legal_moves(
+        self, player_to_move: Optional[int] = None
+    ) -> Set[Tuple[int, int]]:
         return self.legal_moves
 
-    def make_move(self, move, player_to_move=None):
+    def make_move(
+        self, move: Tuple[int, int], player_to_move: Optional[int] = None
+    ) -> Tuple[int, int]:
         if player_to_move is None:
             player_to_move = self.player_to_move
 
@@ -78,7 +79,7 @@ class HexStateManager(StateManager):
                 self.board[move] = player_to_move
                 self.legal_moves.remove(move)
                 self.legal_moves.remove(self.first_move)
-                
+
                 self._union_move(move, player_to_move)
                 self._union_move(self.first_move, 1)
 
@@ -87,7 +88,9 @@ class HexStateManager(StateManager):
 
         return move
 
-    def undo_move(self, move, player_to_move=None):
+    def undo_move(
+        self, move: Tuple[int, int], player_to_move: Optional[int] = None
+    ) -> None:
         if player_to_move is None:
             player_to_move = -self.player_to_move  # The player who made the move
 
@@ -96,7 +99,9 @@ class HexStateManager(StateManager):
         self.move_count -= 1
         self._change_player_to_move(player_to_move)
 
-    def make_random_move(self, player_to_move=None):
+    def make_random_move(
+        self, player_to_move: Optional[int] = None
+    ) -> Optional[Tuple[int, int]]:
         if player_to_move is None:
             player_to_move = self.player_to_move
 
@@ -111,11 +116,13 @@ class HexStateManager(StateManager):
 
         return move
 
-    def generate_child_states(self):
+    def generate_child_states(
+        self, player_to_move: Optional[int] = None
+    ) -> Generator[Tuple[Tuple[int, int], int], None, None]:
         for move in self.get_legal_moves():
             yield move, -self.player_to_move
 
-    def check_winning_state(self, player_moved=None):
+    def check_winning_state(self, player_moved: Optional[int] = None) -> bool:
         if player_moved == 1:
             return self._check_winning_state_player1()
         elif player_moved == -1:
@@ -126,16 +133,16 @@ class HexStateManager(StateManager):
                 or self._check_winning_state_player2()
             )
 
-    def reset(self):
+    def reset(self) -> None:
         self._initialize_state(self.board_size)
 
-    def get_eval(self, winner=1):
+    def get_eval(self, winner: int = 1) -> int:
         return winner
 
-    def get_board_shape(self):
+    def get_board_shape(self) -> Any:
         return np.zeros((self.board_size, self.board_size))
 
-    def _initialize_state(self, board_size):
+    def _initialize_state(self, board_size: int) -> None:
         self.board = np.zeros((board_size, board_size))
         self.switched = False
         self.legal_moves = set(
@@ -154,22 +161,32 @@ class HexStateManager(StateManager):
             (i, j) for j in range(board_size) for i in range(board_size)
         ]
 
-        self.ds_player1 = DisjointSet(all_board_positions + [self.top_node, self.bottom_node])
-        self.ds_player2 = DisjointSet(all_board_positions + [self.left_node, self.right_node])
-        
+        self.ds_player1 = DisjointSet(
+            all_board_positions + [self.top_node, self.bottom_node]
+        )
+        self.ds_player2 = DisjointSet(
+            all_board_positions + [self.left_node, self.right_node]
+        )
+
         for i in range(board_size):
             self.ds_player1.union(self.top_node, (0, i))
             self.ds_player1.union(self.bottom_node, (board_size - 1, i))
             self.ds_player2.union(self.left_node, (i, 0))
             self.ds_player2.union(self.right_node, (i, board_size - 1))
 
-    def _check_winning_state_player1(self):
-        return self.ds_player1.find(self.top_node) == self.ds_player1.find(self.bottom_node)
+    def _check_winning_state_player1(self) -> bool:
+        return self.ds_player1.find(self.top_node) == self.ds_player1.find(
+            self.bottom_node
+        )
 
-    def _check_winning_state_player2(self):
-        return self.ds_player2.find(self.left_node) == self.ds_player2.find(self.right_node)
+    def _check_winning_state_player2(self) -> bool:
+        return self.ds_player2.find(self.left_node) == self.ds_player2.find(
+            self.right_node
+        )
 
-    def _expand_neighbors(self, cell, player_to_move=None):
+    def _expand_neighbors(
+        self, cell: Tuple[int, int], player_to_move: Optional[int] = None
+    ) -> list[Tuple[int, int]]:
         if player_to_move is None:
             player_to_move = self.player_to_move
 
@@ -184,7 +201,7 @@ class HexStateManager(StateManager):
             (row - 1, col + 1),
         ]
 
-        neighbors = []
+        neighbors: list[Tuple[int, int]] = []
 
         for neighbor in neighbors_coords:
             if (
@@ -195,7 +212,9 @@ class HexStateManager(StateManager):
 
         return neighbors
 
-    def _union_move(self, move, player_to_move=None):
+    def _union_move(
+        self, move: Tuple[int, int], player_to_move: Optional[int] = None
+    ) -> None:
         if player_to_move is None:
             player_to_move = self.player_to_move
 
@@ -208,9 +227,9 @@ class HexStateManager(StateManager):
             for neighbor in neighbors:
                 self.ds_player2.union(move, neighbor)
 
-    def _is_within_bounds(self, cell):
+    def _is_within_bounds(self, cell: Tuple[int, int]) -> bool:
         row, col = cell
         return 0 <= row < self.board_size and 0 <= col < self.board_size
 
-    def _change_player_to_move(self, player_to_move):
+    def _change_player_to_move(self, player_to_move: int) -> None:
         self.player_to_move = -player_to_move
