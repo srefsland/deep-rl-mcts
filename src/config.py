@@ -2,7 +2,7 @@ import yaml
 from pathlib import Path
 
 # Read config.yml and expose top-level constants expected by the project.
-_CFG_PATH = Path(__file__).resolve().parent / "config.yml"
+_CFG_PATH = Path(__file__).resolve().parent / "config/config.yml"
 _cfg = yaml.safe_load(_CFG_PATH.read_text())
 
 # Board
