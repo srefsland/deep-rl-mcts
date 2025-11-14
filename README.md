@@ -6,4 +6,4 @@ The neural network is a Convolutional Neural Network (CNN), which outputs both t
 
 ## Demonstration
 
-<img src="https://github.com/simenrefsland/it3105-artificial-intelligence-programming/blob/feature/torch/.github/images/hex.gif" width=500px>
+<img src="https://github.com/simenrefsland/it3105-artificial-intelligence-programming/blob/master/.github/images/hex.gif" width=500px>
