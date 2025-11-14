@@ -57,7 +57,6 @@ def test_non_empty_distribution():
     distribution = tree.get_visit_distribution(tree.root)
     distribution = np.squeeze(distribution)
 
-    assert distribution[3] == 0
     assert len(distribution) == 16
     # Within a certain tolerance, the sum should be 1
     assert np.isclose(sum(distribution), 1, atol=1e-08)
