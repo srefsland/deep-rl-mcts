@@ -2,13 +2,14 @@ import logging
 import time
 from datetime import datetime
 
+import os
+
 import numpy as np
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 from tqdm import tqdm
 
 import config
-import replay_buffer
 from actor import Actor
 from display.gameboarddisplay import GameBoardDisplay
 from display.hexboarddisplay import HexBoardDisplay
@@ -18,10 +19,9 @@ from nn.board_encoder import convert_board_state_to_tensor
 from nn.hexresnet import HexResNet
 from nn.nn_options_torch import loss_functions, optimizers
 from nn.train import train
+from replay_buffer import ReplayBuffer, ReplayCase
 from statemanager.hexstatemanager import HexStateManager
 from statemanager.statemanager import StateManager
-
-from replay_buffer import ReplayCase, ReplayBuffer
 
 device = torch.device(
     "cuda"
@@ -44,7 +44,7 @@ def rl_algorithm(
 
     replay_buf = ReplayBuffer(maxlen=config.REPLAY_BUFFER_SIZE)
     i_s = config.SAVE_INTERVAL
-    time_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+
     replay_buf.clear()
 
     for g_a in tqdm(range(config.NUM_EPISODES + 1)):
@@ -116,28 +116,45 @@ def rl_algorithm(
 
         minibatch = replay_buf.get_random_minibatch(config.MINI_BATCH_SIZE)
 
-        # Create train data loader torch
         train_dataset = TensorDataset(
             torch.tensor(minibatch.X).float(),
             torch.tensor(minibatch.y_actor).float(),
             torch.tensor(minibatch.y_critic).float(),
         )
-        
+
         train_loader = DataLoader(
             train_dataset, batch_size=config.MINI_BATCH_SIZE, shuffle=True
         )
 
+        # Always include date in checkpoint_dir for uniqueness if used elsewhere
+        checkpoint_dir = None
+        if g_a % i_s != 0:
+            date_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+            checkpoint_dir = (
+                f"{config.MODEL_DIR}/episode_{g_a}_size_{config.BOARD_SIZE}_{date_str}"
+            )
+
+        checkpoint_dir = None
+
+        if g_a % i_s == 0:
+            date_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+            checkpoint_dir = (
+                f"{config.MODEL_DIR}/episode_{g_a}_size_{config.BOARD_SIZE}_{date_str}"
+            )
+
         train(
             model=actor.nn,
             train_loader=train_loader,
-            optimizer=optimizers[config.ANN_OPTIMIZER](actor.nn.parameters(), lr=config.LEARNING_RATE),
+            optimizer=optimizers[config.ANN_OPTIMIZER](
+                actor.nn.parameters(), lr=config.LEARNING_RATE
+            ),
             device=actor.nn.device,
             epochs=config.NUM_EPOCHS,
             loss_actor_fn=loss_functions[config.LOSS_FUNCTION_ACTOR](),
             loss_critic_fn=loss_functions[config.LOSS_FUNCTION_CRITIC](),
-            checkpoint_dir=config.MODEL_DIR if g_a % i_s == 0 else None,
+            checkpoint_dir=checkpoint_dir,
         )
-        
+
         actor.decrease_epsilon()
 
 

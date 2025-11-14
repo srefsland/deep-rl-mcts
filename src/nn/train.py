@@ -92,18 +92,6 @@ def train_epoch(
     )
 
 
-def create_run_dir(base_dir: str = "models", name: Optional[str] = None) -> str:
-    """Create a timestamped run directory under base_dir and return its path.
-
-    If name is provided, it will be included in the folder name.
-    """
-    ts = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-    folder_name = f"{ts}" if name is None else f"{ts}__{name}"
-    run_dir = os.path.join(base_dir, folder_name)
-    os.makedirs(run_dir, exist_ok=True)
-    return run_dir
-
-
 def save_config(run_dir: str, config: dict):
     path = os.path.join(run_dir, "config.json")
     with open(path, "w") as f:
@@ -135,11 +123,6 @@ def train(
     timestamped folder will be created under `models/` and used to store checkpoints,
     a `config.json` and a `losses.npz` file with numeric loss history.
     """
-    created_run_dir = False
-    if checkpoint_dir is None:
-        checkpoint_dir = create_run_dir("models")
-        created_run_dir = True
-
     losses_actor_history = []
     losses_critic_history = []
 
@@ -169,6 +152,7 @@ def train(
         )
 
         if checkpoint_dir is not None:
+            os.makedirs(checkpoint_dir, exist_ok=True)
             path = os.path.join(checkpoint_dir, f"checkpoint_epoch_{epoch}.pt")
             torch.save(
                 {

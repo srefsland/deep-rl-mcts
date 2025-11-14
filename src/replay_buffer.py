@@ -47,6 +47,8 @@ class ReplayBuffer:
             [case.target_distribution for case in minibatch], axis=0
         )
         y_critic = np.concatenate([case.target_value for case in minibatch], axis=0)
+        if y_critic.ndim == 1:
+            y_critic = np.expand_dims(y_critic, axis=1)
 
         return Batch(X=X, y_actor=y_actor, y_critic=y_critic)
 
@@ -58,5 +60,7 @@ class ReplayBuffer:
         )
         y_actor = np.concatenate([case.target_distribution for case in cases], axis=0)
         y_critic = np.concatenate([case.target_value for case in cases], axis=0)
+        if y_critic.ndim == 1:
+            y_critic = np.expand_dims(y_critic, axis=1)
 
         return Batch(X=X, y_actor=y_actor, y_critic=y_critic)
