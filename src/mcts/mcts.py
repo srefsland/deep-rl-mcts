@@ -1,18 +1,22 @@
+from typing import Tuple
 import numpy as np
 
-from .mctsnode import MCTSNode
+from actor import Actor
+from statemanager.statemanager import StateManager
+
+from mcts.mctsnode import MCTSNode
 
 
 class MCTS:
-    def __init__(self, state_manager, c=1.0, use_critic=False):
+    def __init__(self, state_manager: StateManager, c: float = 1.0, use_critic: bool = False):
         self.c = c
         self.state_manager = state_manager
         self.root = MCTSNode()
         self.use_critic = use_critic
 
-    def simulation_iteration(self, actor):
+    def simulation_iteration(self, actor: Actor):
         node, sim_state_manager = self.tree_search()
-        reward = self.leaf_evaluation(node, sim_state_manager, actor)
+        reward = self.leaf_evaluation(sim_state_manager, actor)
         self.backpropagation(node, reward)
 
     def tree_search(self):
@@ -33,8 +37,7 @@ class MCTS:
 
         return node, sim_state_manager
 
-    def leaf_evaluation(self, node, sim_state_manager, actor):
-        # Call critic
+    def leaf_evaluation(self, sim_state_manager: StateManager, actor: Actor):
         if np.random.random() > actor.epsilon_critic and self.use_critic:
             reward = actor.predict_critic(
                 sim_state_manager.board, sim_state_manager.player_to_move
@@ -56,19 +59,19 @@ class MCTS:
 
         return reward
 
-    def backpropagation(self, node, reward):
+    def backpropagation(self, node: MCTSNode, reward: float):
         while node is not None:
             node.update_values(reward)
             node = node.parent
 
-    def expand_node(self, node, expand_state_manager):
+    def expand_node(self, node: MCTSNode, expand_state_manager: StateManager):
         node.children = {
             move: MCTSNode(move=move, parent=node, player_to_move=player_to_move)
             for move, player_to_move in expand_state_manager.generate_child_states()
         }
 
     # Upper confidence bound that balances exploration (U(s,a)) and exploitation (Q(s,a))
-    def get_ucb(self, node, child_node):
+    def get_ucb(self, node: MCTSNode, child_node: MCTSNode):
         # Calculates the upper confidence bound for the given node and child node.
         # Player 1 wants to maximize the value, player 2 wants to minimize the value
         if node.player_to_move == 1:
@@ -77,10 +80,10 @@ class MCTS:
             return child_node.get_qsa() - self.get_exploration_bonus(node, child_node)
 
     # Exploration term
-    def get_exploration_bonus(self, node, child_node):
+    def get_exploration_bonus(self, node: MCTSNode, child_node: MCTSNode):
         return self.c * np.sqrt(np.log(node.n) / (child_node.n + 1))
 
-    def select_best_ucb(self, node):
+    def select_best_ucb(self, node: MCTSNode):
         keys, children = zip(*node.children.items())
 
         vectorized_get_ucb = np.vectorize(lambda child: self.get_ucb(node, child))
@@ -118,12 +121,12 @@ class MCTS:
 
         return selected_move
 
-    def prune_tree(self, move):
+    def prune_tree(self, move: Tuple[int, int]):
         self.state_manager.make_move(move)
         self.root = self.root.children[move]
         self.root.parent = None
 
-    def get_visit_distribution(self, node):
+    def get_visit_distribution(self, node: MCTSNode):
         visit_distribution = self.state_manager.get_board_shape()
 
         for move, child in node.children.items():

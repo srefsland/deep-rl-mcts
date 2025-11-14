@@ -1,15 +1,18 @@
+from typing import Optional, Tuple
+
+
 class MCTSNode:
-    def __init__(self, move=None, parent=None, player_to_move=None):
+    def __init__(self, move: Optional[Tuple[int, int]] = None, parent: Optional["MCTSNode"] = None, player_to_move: Optional[int] = None):
         self.parent = parent
         self.children = None
         # Accumulated rewards
-        self.e = 0
+        self.e = 0.0
         self.n = 0
         # The move that led to this node
         self.move = move
         self.player_to_move = player_to_move
 
-    def update_values(self, reward):
+    def update_values(self, reward: float):
         self.n += 1
         self.e += reward
 
