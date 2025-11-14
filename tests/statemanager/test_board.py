@@ -1,3 +1,4 @@
+from src.statemanager.exceptions import IllegalMoveException
 from src.statemanager.hexstatemanager import HexStateManager
 import pytest
 
@@ -62,32 +63,31 @@ def test_move_making():
 
     board.make_move((0, 0), -1)
     assert board.board[0][0] == -1
-    assert board.player == 1
+    assert board.player_to_move == 1
 
     board.make_move((0, 1), 1)
     assert board.board[0][1] == 1
-    assert board.player == -1
+    assert board.player_to_move == -1
     
 def test_switch_rule():
-    board = HexStateManager(4, switch_rule_allowed=True)
+    board = HexStateManager(4)
     
-    board.make_move((0, 0))
-    assert board.player == -1
+    board.make_move((2, 3))
+    assert board.player_to_move == -1
     assert board.switched == False
     
     assert len([_ for _ in board.generate_child_states()]) == 16
     
-    board.make_move((0, 0))
-    assert board.player == -1
+    board.make_move((2, 3))
+    assert board.player_to_move == 1
     assert board.switched == True
+    assert board.board[(2, 3)] == 0
+    assert board.board[(3, 2)] == -1
     
     assert len([_ for _ in board.generate_child_states()]) == 15
     
-    with pytest.raises(Exception):
-        board.make_move((0, 0))
+    with pytest.raises(IllegalMoveException):
+        board.make_move((3, 2))
     
-    board.make_move((0, 1))
-    assert board.player == 1
-    
-    with pytest.raises(Exception):
-        board.make_move((0, 1))
+    board.make_move((2, 3))
+    assert board.player_to_move == -1
