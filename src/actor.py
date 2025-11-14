@@ -5,17 +5,15 @@ from nn.hexresnet import HexResNet
 
 
 class Actor:
-    """The actor class is used to make moves from trained neural networks."""
-
     def __init__(
         self,
-        name,
+        name: str,
         nn: HexResNet,
-        board_size,
-        epsilon=1.0,
-        epsilon_decay=0.99,
-        epsilon_critic=2.0,
-        epsilon_decay_critic=0.996,
+        board_size: int,
+        epsilon: float = 1.0,
+        epsilon_decay: float = 0.99,
+        epsilon_critic: float = 2.0,
+        epsilon_decay_critic: float = 0.996,
     ):
         self.name = name
         self.nn = nn
@@ -25,7 +23,7 @@ class Actor:
         self.epsilon_critic = epsilon_critic
         self.epsilon_decay_critic = epsilon_decay_critic
 
-    def epsilon_greedy_policy(self, state, player, legal_moves):
+    def epsilon_greedy_policy(self, state: np.ndarray, player: int, legal_moves: set):
         if np.random.random() < self.epsilon:
             move = self.predict_random_move(legal_moves)
         else:
@@ -40,29 +38,22 @@ class Actor:
         self.epsilon = max(epsilon_decayed, 0.1)
         self.epsilon_critic = max(epsilon_critic_decayed, 0.1)
 
-    def predict_critic(self, state, player_to_move):
+    def predict_critic(self, state: np.ndarray, player_to_move: int):
         nn_input = convert_board_state_to_tensor(state, player_to_move)
         X = self.nn.call_critic(nn_input)
 
         return X.item()
 
-    def predict_random_move(self, legal_moves):
+    def predict_random_move(self, legal_moves: set):
         legal_moves_list = list(legal_moves)
         move = legal_moves_list[np.random.choice(len(legal_moves_list))]
 
         return move
 
-    def predict_best_move(self, state=None, player=None, legal_moves=None):
-        """Predicts the best move given the model input.
-
-        Args:
-            state (StateManager, optional): the state of the game. Defaults to None.
-            model_input (np.ndarray, optional): the raw model input. Defaults to None.
-
-        Returns:
-            tuple[int, int]: the move to choose
-        """
-        nn_input = self.nn.convert_to_nn_input(state, player)
+    def predict_best_move(
+        self, state: np.ndarray = None, player: int = None, legal_moves: set = None
+    ):
+        nn_input = convert_board_state_to_tensor(state, player)
         predictions = self._predict_moves(nn_input, legal_moves)
 
         prediction = np.argmax(predictions)
@@ -70,17 +61,10 @@ class Actor:
 
         return move
 
-    def predict_probabilistic_move(self, state=None, player=None, legal_moves=None):
-        """Predicts the move according to the probability distribution given by the model.
-
-        Args:
-            state (StateManager, optional): the state of the game. Defaults to None.
-            model_input (np.ndarray, optional): the raw model input. Defaults to None.
-
-        Returns:
-            tuple[int, int]: the move to choose
-        """
-        nn_input = self.nn.convert_to_nn_input(state, player)
+    def predict_probabilistic_move(
+        self, state: np.ndarray = None, player: int = None, legal_moves: set = None
+    ):
+        nn_input = convert_board_state_to_tensor(state, player)
 
         moves = self._predict_moves(nn_input, legal_moves).flatten()
         indices = np.arange(len(moves))
@@ -90,16 +74,7 @@ class Actor:
 
         return move
 
-    def _predict_moves(self, X, legal_moves):
-        """Predicts the output of the neural network given the input.
-        Uses the __call__ method of the model, which is faster than using the predict method.
-
-        Args:
-            X (np.ndarray): the input to the neural network
-
-        Returns:
-            np.ndarray: the predictions for each cell
-        """
+    def _predict_moves(self, X: np.ndarray, legal_moves: set):
         # Convert to tensor
         prediction = self.nn.call_actor(X)
 

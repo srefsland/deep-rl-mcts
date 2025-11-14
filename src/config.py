@@ -40,4 +40,5 @@ LOSS_FUNCTION_CRITIC = _cfg["ann"]["loss_function_critic"]
 NUM_EPOCHS = _cfg["ann"]["num_epochs"]
 BRIDGE_FEATURES = _cfg["ann"]["bridge_features"]
 USE_CRITIC = _cfg["ann"]["use_critic"]
+MODEL_DIR = _cfg["ann"]["model_dir"]
 

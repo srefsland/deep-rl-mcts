@@ -33,3 +33,4 @@ ann:
   num_epochs: 5
   bridge_features: false
   use_critic: false
+  model_dir: "models/"

@@ -190,7 +190,8 @@ poetry.toml
 .ionide
 .vscode
 
-models*
+models/*        
+!models/.gitkeep
 models_cnn/
 cached_models/
 models_5x5_topp*/

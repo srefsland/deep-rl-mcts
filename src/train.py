@@ -21,6 +21,8 @@ from nn.train import train
 from statemanager.hexstatemanager import HexStateManager
 from statemanager.statemanager import StateManager
 
+from replay_buffer import ReplayCase, ReplayBuffer
+
 device = torch.device(
     "cuda"
     if torch.cuda.is_available()
@@ -40,7 +42,7 @@ def rl_algorithm(
 
     logging.info(f"Using device: {actor.nn.device}")
 
-    replay_buf = replay_buffer.ReplayBuffer(maxlen=config.REPLAY_BUFFER_SIZE)
+    replay_buf = ReplayBuffer(maxlen=config.REPLAY_BUFFER_SIZE)
     i_s = config.SAVE_INTERVAL
     time_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     replay_buf.clear()
@@ -93,10 +95,10 @@ def rl_algorithm(
             )
 
             replay_buf.add_case(
-                (
-                    board_state,
-                    distribution,
-                    np.array([mcts_tree.root.get_qsa()]),
+                ReplayCase(
+                    board_state=board_state,
+                    target_distribution=distribution,
+                    target_value=np.array([mcts_tree.root.get_qsa()]),
                 )
             )
 
@@ -112,29 +114,31 @@ def rl_algorithm(
             if config.DISPLAY_GAME_RL and g_a % config.DISPLAY_GAME_RL_INTERVAL == 0:
                 display.display_board(state_manager, delay=0.1, newest_move=s_move)
 
-        X, y_actor, y_critic = replay_buf.get_random_minibatch(config.MINI_BATCH_SIZE)
+        minibatch = replay_buf.get_random_minibatch(config.MINI_BATCH_SIZE)
 
         # Create train data loader torch
         train_dataset = TensorDataset(
-            torch.tensor(X).float(),
-            torch.tensor(y_actor).float(),
-            torch.tensor(y_critic).float(),
+            torch.tensor(minibatch.X).float(),
+            torch.tensor(minibatch.y_actor).float(),
+            torch.tensor(minibatch.y_critic).float(),
         )
+        
         train_loader = DataLoader(
             train_dataset, batch_size=config.MINI_BATCH_SIZE, shuffle=True
         )
 
-        # # Train actor and critic
-        # train(
-        #     model=actor.nn,
-        #     train_loader=train_loader,
-        #     optimizer=optimizers[config.ANN_OPTIMIZER](actor.nn.parameters(), lr=config.LEARNING_RATE),
-        #     device=actor.nn.device,
-        #     epochs=config.NUM_EPOCHS,
-        #     loss_actor_fn=loss_functions[config.LOSS_FUNCTION_ACTOR](),
-        #     loss_critic_fn=loss_functions[config.LOSS_FUNCTION_CRITIC](),
-        #     checkpoint_dir=config.MODEL_DIR if g_a % i_s == 0 else None,
-        # )
+        train(
+            model=actor.nn,
+            train_loader=train_loader,
+            optimizer=optimizers[config.ANN_OPTIMIZER](actor.nn.parameters(), lr=config.LEARNING_RATE),
+            device=actor.nn.device,
+            epochs=config.NUM_EPOCHS,
+            loss_actor_fn=loss_functions[config.LOSS_FUNCTION_ACTOR](),
+            loss_critic_fn=loss_functions[config.LOSS_FUNCTION_CRITIC](),
+            checkpoint_dir=config.MODEL_DIR if g_a % i_s == 0 else None,
+        )
+        
+        actor.decrease_epsilon()
 
 
 if __name__ == "__main__":
