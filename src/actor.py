@@ -14,6 +14,7 @@ class Actor:
         epsilon_decay: float = 0.99,
         epsilon_critic: float = 2.0,
         epsilon_decay_critic: float = 0.996,
+        batch_worker=None,
     ):
         self.name = name
         self.nn = nn
@@ -22,12 +23,56 @@ class Actor:
         self.epsilon_decay = epsilon_decay
         self.epsilon_critic = epsilon_critic
         self.epsilon_decay_critic = epsilon_decay_critic
+        self.batch_worker = batch_worker
 
     def epsilon_greedy_policy(self, state: np.ndarray, player: int, legal_moves: set):
         if np.random.random() < self.epsilon:
             move = self.predict_random_move(legal_moves)
+        elif self.batch_worker is not None:
+            move = self.get_move_from_batch_inference(state, player, legal_moves)
         else:
             move = self.predict_best_move(state, player, legal_moves)
+
+        return move
+
+    def get_move_from_batch_inference(self, state, player, legal_moves):
+        nn_input = convert_board_state_to_tensor(state, player)
+        result_queue = self.batch_worker.infer(nn_input)
+        move_probs = result_queue.get()
+        filtered = self.sanitize_move_probs(move_probs, legal_moves)
+
+        return self.select_best_move_from_probs(filtered)
+
+    def sanitize_move_probs(self, move_probs, legal_moves):
+        # Only squeeze axis=0 if its size is 1, else leave as is
+        if move_probs.shape[0] == 1:
+            prediction = np.squeeze(move_probs, axis=0)
+        else:
+            prediction = move_probs
+        for i in range(len(prediction)):
+            mv = (i // self.board_size, i % self.board_size)
+            if mv not in legal_moves:
+                prediction[i] = 0
+        return prediction
+
+    def select_best_move_from_probs(self, prediction):
+        move_idx = np.argmax(prediction)
+
+        move = (move_idx // self.board_size, move_idx % self.board_size)
+
+        return move
+
+    def select_probabilistic_move_from_probs(self, prediction):
+        probs = prediction.flatten()
+
+        indices = np.arange(len(probs))
+
+        probs = (
+            probs / probs.sum() if probs.sum() > 0 else np.ones_like(probs) / len(probs)
+        )
+        move_idx = np.random.choice(indices, p=probs)
+
+        move = (move_idx // self.board_size, move_idx % self.board_size)
 
         return move
 
@@ -54,40 +99,18 @@ class Actor:
         self, state: np.ndarray = None, player: int = None, legal_moves: set = None
     ):
         nn_input = convert_board_state_to_tensor(state, player)
-        predictions = self._predict_moves(nn_input, legal_moves)
+        predictions = self.nn.call_actor(nn_input)
 
-        prediction = np.argmax(predictions)
-        move = (prediction // self.board_size, prediction % self.board_size)
+        filtered = self.sanitize_move_probs(predictions, legal_moves)
 
-        return move
+        return self.select_best_move_from_probs(filtered)
 
     def predict_probabilistic_move(
         self, state: np.ndarray = None, player: int = None, legal_moves: set = None
     ):
         nn_input = convert_board_state_to_tensor(state, player)
+        predictions = self.nn.call_actor(nn_input)
 
-        moves = self._predict_moves(nn_input, legal_moves).flatten()
-        indices = np.arange(len(moves))
+        filtered = self.sanitize_move_probs(predictions, legal_moves)
 
-        move = np.random.choice(indices, p=moves)
-        move = (move // self.board_size, move % self.board_size)
-
-        return move
-
-    def _predict_moves(self, X: np.ndarray, legal_moves: set):
-        # Convert to tensor
-        prediction = self.nn.call_actor(X)
-
-        prediction = np.squeeze(prediction, axis=0)
-
-        for i in range(len(prediction)):
-            move = (i // self.board_size, i % self.board_size)
-            if move not in legal_moves:
-                prediction[i] = 0
-
-        sum_prediction = np.sum(prediction)
-        # If the sum of the prediction is zero, then the mask is used as a fallback
-        # to still return a valid move. This can happen when the model predicts something
-        # to be zero.
-        predictions_normalized = prediction / max(sum_prediction, 1e-6)
-        return predictions_normalized.reshape((self.board_size, self.board_size))
+        return self.select_probabilistic_move_from_probs(filtered)

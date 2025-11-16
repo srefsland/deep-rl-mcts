@@ -19,6 +19,7 @@ rl:
   mini_batch_size: 256
   save_interval: 50
   select_best_move_rl: true
+  rl_multi_threading: false
 
 ann:
   learning_rate: 0.001

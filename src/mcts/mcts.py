@@ -8,12 +8,19 @@ from mcts.mctsnode import MCTSNode
 
 
 class MCTS:
-    def __init__(self, state_manager: StateManager, c: float = 1.0, use_critic: bool = False):
+    def __init__(
+        self,
+        state_manager: StateManager,
+        c: float = 1.0,
+        use_critic: bool = False,
+        use_locks: bool = False,
+    ):
         self.c = c
         self.state_manager = state_manager
-        self.root = MCTSNode()
+        self.root = MCTSNode(use_locks=use_locks)
         self.use_critic = use_critic
-
+        self.use_locks = use_locks
+        
     def simulation_iteration(self, actor: Actor):
         node, sim_state_manager = self.tree_search()
         reward = self.leaf_evaluation(sim_state_manager, actor)
@@ -61,14 +68,32 @@ class MCTS:
 
     def backpropagation(self, node: MCTSNode, reward: float):
         while node is not None:
-            node.update_values(reward)
-            node = node.parent
+            if self.use_locks:
+                with node.backprop_lock:
+                    node.update_values(reward)
+                node = node.parent
+            else:
+                node.update_values(reward)
+                node = node.parent
 
     def expand_node(self, node: MCTSNode, expand_state_manager: StateManager):
-        node.children = {
-            move: MCTSNode(move=move, parent=node, player_to_move=player_to_move)
-            for move, player_to_move in expand_state_manager.generate_child_states()
-        }
+        if self.use_locks:
+            with node.children_lock:
+                if node.children is None:
+                    node.children = {
+                        move: MCTSNode(
+                            move=move, parent=node, player_to_move=player_to_move, use_locks=self.use_locks
+                        )
+                        for move, player_to_move in expand_state_manager.generate_child_states()
+                    }
+        else:
+            if node.children is None:
+                node.children = {
+                    move: MCTSNode(
+                        move=move, parent=node, player_to_move=player_to_move
+                    )
+                    for move, player_to_move in expand_state_manager.generate_child_states()
+                }
 
     # Upper confidence bound that balances exploration (U(s,a)) and exploitation (Q(s,a))
     def get_ucb(self, node: MCTSNode, child_node: MCTSNode):
@@ -81,7 +106,7 @@ class MCTS:
 
     # Exploration term
     def get_exploration_bonus(self, node: MCTSNode, child_node: MCTSNode):
-        return self.c * np.sqrt(np.log(node.n) / (child_node.n + 1))
+        return self.c * np.sqrt(np.log(max(1, node.n)) / (max(1, child_node.n)))
 
     def select_best_ucb(self, node: MCTSNode):
         keys, children = zip(*node.children.items())

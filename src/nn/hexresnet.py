@@ -72,19 +72,13 @@ class HexResNet(nn.Module):
         return a, c
 
     def call_actor(self, x):
-        """Inference with actor head output and softmax
-
-        Args:
-            x (_type_): _description_
-        """
+        """Inference with actor head output and softmax. Always returns (batch, moves) numpy array."""
         in_ch = self.conv_in.in_channels
 
         # Accept single examples (3D) or batched inputs (4D). Detect whether
         # channels are first (C,H,W or N,C,H,W) or last (H,W,C or N,H,W,C).
         if not isinstance(x, torch.Tensor):
             raise TypeError(f"call_actor expects a torch.Tensor, got {type(x)}")
-
-        original_was_batched = x.dim() == 4
 
         if x.dim() == 3:
             # single example: (C,H,W) or (H,W,C)
@@ -130,8 +124,9 @@ class HexResNet(nn.Module):
             probs = F.softmax(logits, dim=1)
 
         out = probs.cpu().numpy()
-        if not original_was_batched:
-            return out[0]
+        # Always return (batch, moves) shape
+        if out.ndim == 1:
+            out = out[None, :]
         return out
 
     def call_critic(self, x):

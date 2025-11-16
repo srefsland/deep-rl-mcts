@@ -26,6 +26,7 @@ REPLAY_BUFFER_SIZE = _cfg["rl"]["replay_buffer_size"]
 MINI_BATCH_SIZE = _cfg["rl"]["mini_batch_size"]
 SAVE_INTERVAL = _cfg["rl"]["save_interval"]
 SELECT_BEST_MOVE_RL = _cfg["rl"]["select_best_move_rl"]
+RL_MULTI_THREADING = _cfg["rl"]["rl_multi_threading"]
 
 # ANN
 LEARNING_RATE = _cfg["ann"]["learning_rate"]

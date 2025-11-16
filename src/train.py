@@ -1,8 +1,8 @@
 import logging
+import threading
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-
-import os
 
 import numpy as np
 import torch
@@ -15,9 +15,10 @@ from display.gameboarddisplay import GameBoardDisplay
 from display.hexboarddisplay import HexBoardDisplay
 from display.hexboarddisplayclassic import HexBoardDisplayClassic
 from mcts.mcts import MCTS
+from nn.batch_inference import BatchActorInferenceWorker
 from nn.board_encoder import convert_board_state_to_tensor
 from nn.hexresnet import HexResNet
-from nn.nn_options_torch import loss_functions, optimizers
+from nn.options_torch import loss_functions, optimizers
 from nn.train import train
 from replay_buffer import ReplayBuffer, ReplayCase
 from statemanager.hexstatemanager import HexStateManager
@@ -28,6 +29,32 @@ device = torch.device(
     if torch.cuda.is_available()
     else "mps" if torch.backends.mps.is_available() else "cpu"
 )
+
+
+def parallel_mcts_tree_search(
+    mcts_tree: MCTS, actor: Actor, num_simulations: list, worker_num: int
+):
+    start_time = time.time()
+
+    while (
+        time.time() - start_time < config.MCTS_DYNAMIC_SIMS_TIME
+        or num_simulations.sum() < config.MCTS_MIN_SIMULATIONS
+    ):
+        mcts_tree.simulation_iteration(actor)
+
+        num_simulations[worker_num] += 1
+
+
+def mcts_tree_search(mcts_tree: MCTS, actor: Actor, num_simulations: list):
+    start_time = time.time()
+
+    while (
+        time.time() - start_time < config.MCTS_DYNAMIC_SIMS_TIME
+        or num_simulations[0] < config.MCTS_MIN_SIMULATIONS
+    ):
+        mcts_tree.simulation_iteration(actor)
+
+        num_simulations[0] += 1
 
 
 def rl_algorithm(
@@ -59,6 +86,7 @@ def rl_algorithm(
             state_manager=mcts_state_manager,
             c=config.MTCS_C,
             use_critic=config.USE_CRITIC,
+            use_locks=config.RL_MULTI_THREADING,
         )
 
         moves = 0
@@ -66,18 +94,31 @@ def rl_algorithm(
             logging.info(f"Move {moves}")
 
             start_time = time.time()
-            i = 0
 
-            while (
-                time.time() - start_time < config.MCTS_DYNAMIC_SIMS_TIME
-                or i < config.MCTS_MIN_SIMULATIONS
-            ):
-                # call simulation then increment counter so `i` equals performed simulations
-                mcts_tree.simulation_iteration(actor)
-                i += 1
+            num_workers = 32
+
+            num_simulations = np.zeros(num_workers, dtype=int)
+
+            if config.RL_MULTI_THREADING:
+                with ThreadPoolExecutor(max_workers=num_workers) as executor:
+                    futures = [
+                        executor.submit(
+                            parallel_mcts_tree_search,
+                            mcts_tree,
+                            actor,
+                            num_simulations,
+                            i,
+                        )
+                        for i in range(num_workers)
+                    ]
+
+                    for future in as_completed(futures):
+                        future.result()
+            else:
+                mcts_tree_search(mcts_tree, actor, num_simulations)
 
             logging.info(
-                f"Number of simulations: {i}, time: {(time.time() - start_time):.2f} seconds"
+                f"Number of simulations: {num_simulations.sum()}, time: {(time.time() - start_time):.2f} seconds"
             )
 
             moves += 1
@@ -126,7 +167,6 @@ def rl_algorithm(
             train_dataset, batch_size=config.MINI_BATCH_SIZE, shuffle=True
         )
 
-        # Always include date in checkpoint_dir for uniqueness if used elsewhere
         checkpoint_dir = None
         if g_a % i_s != 0:
             date_str = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -181,6 +221,10 @@ if __name__ == "__main__":
         else HexBoardDisplayClassic() if config.CLASSIC_DISPLAY else HexBoardDisplay()
     )
 
+    num_workers = 32
+
+    batch_worker = BatchActorInferenceWorker(model=nn, max_batch_size=num_workers)
+
     actor = Actor(
         name="actor_rl",
         nn=nn,
@@ -189,6 +233,7 @@ if __name__ == "__main__":
         epsilon_decay=config.EPSILON_DECAY,
         epsilon_critic=config.EPSILON_CRITIC,
         epsilon_decay_critic=config.EPSILON_DECAY_CRITIC,
+        batch_worker=batch_worker if config.RL_MULTI_THREADING else None,
     )
 
     rl_algorithm(
